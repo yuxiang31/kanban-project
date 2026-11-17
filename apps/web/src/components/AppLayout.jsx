@@ -12,7 +12,7 @@ export default function AppLayout() {
 
   async function handleLogout() {
     await logout();
-    navigate('/login', {replace: true});
+    navigate('/', {replace: true});
   }
 
   return (

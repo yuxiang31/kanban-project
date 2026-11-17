@@ -25,19 +25,25 @@ function SessionCheck({children}) {
   return children;
 }
 
-/** Renders child routes only for logged-in users. */
-export function ProtectedRoute() {
+/**
+ * Renders child routes only for logged-in users. Logged-out visitors get
+ * `landing` at the home address and the login page everywhere else.
+ * @param {{landing?: *}} props
+ */
+export function ProtectedRoute({landing = null}) {
   const {user} = useAuth();
   const location = useLocation();
-  return (
-    <SessionCheck>
-      {user ? (
-        <Outlet />
-      ) : (
-        <Navigate to="/login" replace state={{from: location.pathname}} />
-      )}
-    </SessionCheck>
-  );
+  let content;
+  if (user) {
+    content = <Outlet />;
+  } else if (landing && location.pathname === '/') {
+    content = landing;
+  } else {
+    content = (
+      <Navigate to="/login" replace state={{from: location.pathname}} />
+    );
+  }
+  return <SessionCheck>{content}</SessionCheck>;
 }
 
 /** Renders child routes only for logged-out users (login, register). */

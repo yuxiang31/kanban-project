@@ -9,6 +9,7 @@ import LoginPage from './features/auth/LoginPage.jsx';
 import RegisterPage from './features/auth/RegisterPage.jsx';
 import BoardListPage from './features/boards/BoardListPage.jsx';
 import BoardPage from './features/boards/BoardPage.jsx';
+import LandingPage from './features/landing/LandingPage.jsx';
 import TeamDetailPage from './features/teams/TeamDetailPage.jsx';
 import TeamsPage from './features/teams/TeamsPage.jsx';
 
@@ -30,7 +31,7 @@ export const routes = [
     ],
   },
   {
-    element: <ProtectedRoute />,
+    element: <ProtectedRoute landing={<LandingPage />} />,
     children: [
       {
         element: <AppLayout />,

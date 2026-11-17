@@ -12,7 +12,7 @@ import {
 describe('authentication', () => {
   it('sends logged-out visitors to the login page', async () => {
     mockFetch(loggedOut);
-    renderApp('/');
+    renderApp('/teams');
     expect(
       await screen.findByRole('heading', {name: /log in/i}),
     ).toBeInTheDocument();
@@ -132,13 +132,13 @@ describe('authentication', () => {
     expect(screen.queryByRole('heading', {name: /log in/i})).toBeNull();
   });
 
-  it('logs out back to the login page', async () => {
+  it('logs out back to the landing page', async () => {
     mockFetch({...loggedInAsAlice, 'POST /api/auth/logout': {status: 204}});
     renderApp('/');
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', {name: /log out/i}));
     expect(
-      await screen.findByRole('heading', {name: /log in/i}),
+      await screen.findByRole('heading', {level: 1, name: /work that moves/i}),
     ).toBeInTheDocument();
   });
 

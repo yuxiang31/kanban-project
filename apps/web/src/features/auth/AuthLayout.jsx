@@ -1,3 +1,4 @@
+import {Link} from 'react-router';
 import ThemeToggle from '../../components/ThemeToggle.jsx';
 
 /**
@@ -11,7 +12,9 @@ export default function AuthLayout({title, children}) {
         <ThemeToggle />
       </div>
       <div className="auth-card">
-        <p className="brand">Kanban</p>
+        <Link to="/" className="brand" aria-label="Kanban home">
+          Kanban
+        </Link>
         <h1>{title}</h1>
         {children}
       </div>
