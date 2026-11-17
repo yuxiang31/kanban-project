@@ -10,20 +10,24 @@ import {AppProviders} from '../src/App.jsx';
 /**
  * Replaces global fetch with a mock answering from a route table. Keys are
  * `"METHOD /api/path"`; values are `{status, body}` or a function of the
- * parsed request body returning one. Unknown routes answer 404.
+ * parsed request body returning one. Requests not in the table go to
+ * `fallback(method, url, body)` if given; anything still unanswered is 404.
  * @param {!Object<string, (!Object|function(*): !Object)>} routes
+ * @param {function(string, string, *): (!Object|undefined)=} fallback
  * @return {!Object} The vi.fn mock, for call assertions.
  */
-export function mockFetch(routes) {
+export function mockFetch(routes, fallback) {
   const fn = vi.fn(async (url, init = {}) => {
     const method = init.method ?? 'GET';
     const key = `${method} ${url}`;
     const body = init.body ? JSON.parse(init.body) : undefined;
     const handler = routes[key];
-    const result =
-      typeof handler === 'function'
-        ? handler(body)
-        : (handler ?? {status: 404, body: {message: 'Not found'}});
+    const result = (typeof handler === 'function'
+      ? handler(body)
+      : (handler ?? fallback?.(method, url, body))) ?? {
+      status: 404,
+      body: {message: 'Not found'},
+    };
     const status = result.status ?? 200;
     return new Response(
       status === 204 ? null : JSON.stringify(result.body ?? {}),

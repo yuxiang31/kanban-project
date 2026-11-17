@@ -10,6 +10,9 @@ import fastifyStatic from '@fastify/static';
 import dbPlugin from './plugins/db.js';
 import authPlugin from './plugins/auth.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import boardRoutes from './modules/boards/boards.routes.js';
+import stageRoutes from './modules/stages/stages.routes.js';
+import taskRoutes from './modules/tasks/tasks.routes.js';
 
 const DEFAULT_BCRYPT_ROUNDS = 12;
 const DEFAULT_AUTH_RATE_LIMIT = {max: 20, timeWindow: 60_000};
@@ -56,6 +59,9 @@ export async function buildApp(opts) {
         bcryptRounds: opts.bcryptRounds ?? DEFAULT_BCRYPT_ROUNDS,
         rateLimit: opts.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT,
       });
+      await api.register(boardRoutes);
+      await api.register(stageRoutes);
+      await api.register(taskRoutes);
     },
     {prefix: '/api'},
   );

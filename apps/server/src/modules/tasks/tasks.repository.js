@@ -1,0 +1,78 @@
+/**
+ * @fileoverview SQL access for tasks.
+ */
+
+/** @param {!Object} db @param {number} id */
+export function findTask(db, id) {
+  return db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+}
+
+/** @param {!Object} db @param {number} boardId */
+export function listTasks(db, boardId) {
+  return db
+    .prepare(
+      'SELECT * FROM tasks WHERE board_id = ? ORDER BY stage_id, position, id',
+    )
+    .all(boardId);
+}
+
+/** @param {!Object} db @param {number} stageId @return {?number} */
+export function maxTaskPosition(db, stageId) {
+  return db
+    .prepare('SELECT MAX(position) AS max FROM tasks WHERE stage_id = ?')
+    .get(stageId).max;
+}
+
+/**
+ * @param {!Object} db
+ * @param {{boardId: number, stageId: number, title: string,
+ *     description: string, position: number, createdBy: number}} task
+ * @return {!Object} The inserted row.
+ */
+export function insertTask(db, task) {
+  return db
+    .prepare(
+      `INSERT INTO tasks
+         (board_id, stage_id, title, description, position, created_by)
+       VALUES (@boardId, @stageId, @title, @description, @position, @createdBy)
+       RETURNING *`,
+    )
+    .get(task);
+}
+
+/**
+ * @param {!Object} db
+ * @param {number} id
+ * @param {{stageId: number, title: string, description: string,
+ *     position: number}} fields
+ * @return {!Object} The updated row.
+ */
+export function updateTask(db, id, fields) {
+  return db
+    .prepare(
+      `UPDATE tasks
+       SET stage_id = @stageId, title = @title, description = @description,
+           position = @position, updated_at = datetime('now')
+       WHERE id = @id RETURNING *`,
+    )
+    .get({...fields, id});
+}
+
+/** @param {!Object} db @param {number} id */
+export function deleteTask(db, id) {
+  db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+}
+
+/**
+ * @param {!Object} db
+ * @param {number} taskId
+ * @return {!Array<number>}
+ */
+export function listAssigneeIds(db, taskId) {
+  return db
+    .prepare(
+      'SELECT user_id FROM task_assignees WHERE task_id = ? ORDER BY user_id',
+    )
+    .all(taskId)
+    .map((row) => row.user_id);
+}

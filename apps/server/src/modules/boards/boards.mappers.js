@@ -1,0 +1,43 @@
+/**
+ * @fileoverview Row → API shape conversions for boards, stages and tasks.
+ */
+
+/** @param {!Object} row */
+export function toBoardSummary(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    teamId: row.team_id,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
+}
+
+/** @param {!Object} row */
+export function toStage(row) {
+  return {
+    id: row.id,
+    boardId: row.board_id,
+    name: row.name,
+    position: row.position,
+  };
+}
+
+/**
+ * @param {!Object} row
+ * @param {!Array<number>=} assigneeIds
+ */
+export function toTask(row, assigneeIds = []) {
+  return {
+    id: row.id,
+    boardId: row.board_id,
+    stageId: row.stage_id,
+    title: row.title,
+    description: row.description,
+    position: row.position,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    assigneeIds,
+  };
+}
