@@ -38,6 +38,9 @@ export function createFakeApi({me = users.alice} = {}) {
   const fullBoard = (board) => ({
     ...board,
     canDelete: board.canDeleteOverride ?? true,
+    members: board.teamId
+      ? state.teams.find((t) => t.id === board.teamId).memberIds.map(userById)
+      : [me],
     stages: stagesOf(board.id),
     tasks: tasksOf(board.id),
   });
@@ -302,6 +305,15 @@ export function createFakeApi({me = users.alice} = {}) {
       ([taskId], body) => {
         const task = state.tasks.find((t) => t.id === taskId);
         Object.assign(task, body);
+        return {body: {task}};
+      },
+    ],
+    [
+      'PUT',
+      /^\/api\/tasks\/(\d+)\/assignees$/,
+      ([taskId], body) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        task.assigneeIds = [...new Set(body.userIds)].sort((a, b) => a - b);
         return {body: {task}};
       },
     ],

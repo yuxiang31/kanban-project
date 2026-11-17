@@ -7,6 +7,7 @@ import {nextPosition} from '../../utils/position.js';
 import {insertStage, listStages} from '../stages/stages.repository.js';
 import {listTasks} from '../tasks/tasks.repository.js';
 import {assertTeamMember} from '../teams/teams.service.js';
+import {toPublicUser} from '../users/users.repository.js';
 import {
   assertBoardAccess,
   assertCanDeleteBoard,
@@ -50,6 +51,7 @@ export function fullBoard(db, board, userId) {
   return {
     ...toBoardSummary(board),
     canDelete: canDeleteBoard(board, userId),
+    members: repo.listAssignableUsers(db, board).map(toPublicUser),
     stages: listStages(db, board.id).map(toStage),
     tasks: listTasks(db, board.id).map((row) =>
       toTask(row, assignees.get(row.id) ?? []),

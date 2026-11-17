@@ -1,12 +1,15 @@
 /**
- * @fileoverview Task rules: create, edit, move and delete.
+ * @fileoverview Task rules: create, edit, move, assign and delete. A task
+ * can be handled by several people; each must be able to see the board.
  */
 
 import {badRequest, notFound} from '../../utils/errors.js';
 import {nextPosition, positionFromNeighbours} from '../../utils/position.js';
 import {assertBoardAccess} from '../boards/boards.access.js';
 import {toTask} from '../boards/boards.mappers.js';
+import {listAssignableUsers} from '../boards/boards.repository.js';
 import {findStage} from '../stages/stages.repository.js';
+import {findUserById} from '../users/users.repository.js';
 import * as repo from './tasks.repository.js';
 
 /**
@@ -124,4 +127,31 @@ export function deleteTask(db, taskId, userId) {
   const task = assertTaskAccess(db, taskId, userId);
   repo.deleteTask(db, task.id);
   return toTask(task);
+}
+
+/**
+ * Sets who handles a task, replacing the previous set.
+ * @param {!Object} db
+ * @param {number} taskId
+ * @param {!Array<number>} userIds
+ * @param {number} actorId
+ * @return {!Object} The task.
+ */
+export function setAssignees(db, taskId, userIds, actorId) {
+  const task = assertTaskAccess(db, taskId, actorId);
+  const board = assertBoardAccess(db, task.board_id, actorId);
+  const allowed = new Set(listAssignableUsers(db, board).map((u) => u.id));
+  const unique = [...new Set(userIds)];
+  for (const userId of unique) {
+    if (!allowed.has(userId)) {
+      const user = findUserById(db, userId);
+      throw badRequest(
+        user
+          ? `${user.username} cannot be assigned: they are not on this board.`
+          : 'Unknown user.',
+      );
+    }
+  }
+  db.transaction(() => repo.replaceAssignees(db, task.id, unique))();
+  return toTask(repo.findTask(db, task.id), repo.listAssigneeIds(db, task.id));
 }

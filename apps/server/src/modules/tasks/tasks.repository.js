@@ -95,3 +95,19 @@ export function rebalanceTasks(db, containerId) {
     ids.forEach(({id}, i) => update.run((i + 1) * STEP, id));
   })();
 }
+
+/**
+ * Replaces a task's assignees.
+ * @param {!Object} db
+ * @param {number} taskId
+ * @param {!Array<number>} userIds
+ */
+export function replaceAssignees(db, taskId, userIds) {
+  db.prepare('DELETE FROM task_assignees WHERE task_id = ?').run(taskId);
+  const insert = db.prepare(
+    'INSERT INTO task_assignees (task_id, user_id) VALUES (?, ?)',
+  );
+  for (const userId of userIds) {
+    insert.run(taskId, userId);
+  }
+}

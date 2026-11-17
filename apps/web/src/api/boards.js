@@ -53,3 +53,16 @@ export const updateTask = async (taskId, input) =>
 /** @param {number} taskId */
 export const deleteTask = (taskId) =>
   apiFetch(`/tasks/${taskId}`, {method: 'DELETE'});
+
+/**
+ * Sets who handles a task (replaces the previous set).
+ * @param {number} taskId
+ * @param {!Array<number>} userIds
+ */
+export const setAssignees = async (taskId, userIds) =>
+  (
+    await apiFetch(`/tasks/${taskId}/assignees`, {
+      method: 'PUT',
+      body: {userIds},
+    })
+  ).task;

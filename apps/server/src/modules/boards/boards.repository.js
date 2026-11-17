@@ -91,3 +91,26 @@ export function listBoardsOfTeam(db, teamId) {
     )
     .all(teamId);
 }
+
+/**
+ * People who can be assigned to the board's tasks: the owner of a personal
+ * board, or every member of a team board's team.
+ * @param {!Object} db
+ * @param {!Object} board A boards row.
+ * @return {!Array<!Object>} Users rows, by display name.
+ */
+export function listAssignableUsers(db, board) {
+  if (board.team_id == null) {
+    return db
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .all(board.owner_user_id);
+  }
+  return db
+    .prepare(
+      `SELECT u.* FROM users u
+       JOIN team_members tm ON tm.user_id = u.id
+       WHERE tm.team_id = ?
+       ORDER BY u.display_name COLLATE NOCASE, u.username COLLATE NOCASE`,
+    )
+    .all(board.team_id);
+}

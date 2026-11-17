@@ -4,7 +4,7 @@
  */
 
 import {useMemo, useState} from 'react';
-import {Link, useNavigate, useParams} from 'react-router';
+import {Link, useNavigate, useParams, useSearchParams} from 'react-router';
 import {useQueryClient} from '@tanstack/react-query';
 import {
   DndContext,
@@ -37,6 +37,13 @@ import {
 } from './dnd.js';
 import {useBoardDnd} from './useBoardDnd.js';
 import {useMoveStage, useMoveTask} from './useMoves.js';
+import PeopleFilter from './PeopleFilter.jsx';
+import {
+  PEOPLE_PARAM,
+  filterTasks,
+  parsePeopleFilter,
+  serializePeopleFilter,
+} from './peopleFilter.js';
 
 /**
  * Re-measure drop targets throughout a drag: moving a task into another
@@ -106,8 +113,39 @@ function BoardView({board}) {
     mutation.mutate(move, {onError: setActionError});
   };
 
+  // The person filter lives in the URL; the filtered board is memoized so
+  // its identity only changes with the data or the filter (the drag hook
+  // relies on that to keep a dropped order on screen).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterValue = searchParams.get(PEOPLE_PARAM) ?? '';
+  const selectedPeople = useMemo(
+    () => parsePeopleFilter(filterValue),
+    [filterValue],
+  );
+  const visibleBoard = useMemo(
+    () =>
+      selectedPeople.size === 0
+        ? board
+        : {...board, tasks: filterTasks(board.tasks, selectedPeople)},
+    [board, selectedPeople],
+  );
+  function setPeopleFilter(selected) {
+    setSearchParams(
+      (params) => {
+        const value = serializePeopleFilter(selected);
+        if (value) {
+          params.set(PEOPLE_PARAM, value);
+        } else {
+          params.delete(PEOPLE_PARAM);
+        }
+        return params;
+      },
+      {replace: true},
+    );
+  }
+
   const {groups, stages, activeId, handlers} = useBoardDnd({
-    board,
+    board: visibleBoard,
     onMoveTask: runMove(moveTask),
     onMoveStage: runMove(moveStage),
   });
@@ -135,7 +173,7 @@ function BoardView({board}) {
     () => makeCollisionDetection(groups),
     [groups],
   );
-  const taskById = new Map(board.tasks.map((task) => [task.id, task]));
+  const taskById = new Map(visibleBoard.tasks.map((task) => [task.id, task]));
   const tasksOf = (stageId) =>
     (groups[stageId] ?? []).map((id) => taskById.get(id));
   const active = parseDndId(activeId);
@@ -196,13 +234,20 @@ function BoardView({board}) {
           )}
         </div>
       </div>
+      <PeopleFilter
+        members={board.members}
+        selected={selectedPeople}
+        onChange={setPeopleFilter}
+        visibleCount={visibleBoard.tasks.length}
+        totalCount={board.tasks.length}
+      />
       <ErrorMessage error={actionError} />
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
         measuring={MEASURING}
         accessibility={{
-          announcements: makeAnnouncements(board),
+          announcements: makeAnnouncements(visibleBoard),
           screenReaderInstructions: {draggable: DRAG_INSTRUCTIONS},
         }}
         {...handlers}
@@ -226,6 +271,7 @@ function BoardView({board}) {
                     ...neighboursForStep(stages, index, direction),
                   })
                 }
+                members={board.members}
                 onDeleteError={setActionError}
               />
             ))}

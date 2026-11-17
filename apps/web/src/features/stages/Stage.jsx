@@ -25,6 +25,7 @@ import TaskDialog from '../tasks/TaskDialog.jsx';
  * @param {{
  *   boardId: number,
  *   stage: !Object,
+ *   members: !Array<!Object>,
  *   tasks: !Array<!Object>,
  *   canMoveLeft: boolean,
  *   canMoveRight: boolean,
@@ -35,6 +36,7 @@ import TaskDialog from '../tasks/TaskDialog.jsx';
 export default function Stage({
   boardId,
   stage,
+  members,
   tasks,
   canMoveLeft,
   canMoveRight,
@@ -47,6 +49,10 @@ export default function Stage({
   const rename = useBoardMutation((name) => api.updateStage(stage.id, {name}));
   const remove = useBoardMutation(() => api.deleteStage(stage.id));
   const openTask = tasks.find((task) => task.id === openTaskId);
+  const memberById = new Map(members.map((m) => [m.id, m]));
+  /** Assignees still on the board, in the board's member order. */
+  const membersFor = (task) =>
+    task.assigneeIds.map((id) => memberById.get(id)).filter(Boolean);
   const {
     attributes,
     listeners,
@@ -146,14 +152,22 @@ export default function Stage({
         <ol className="task-list">
           {tasks.map((task) => (
             <li key={task.id}>
-              <TaskCard task={task} onOpen={() => setOpenTaskId(task.id)} />
+              <TaskCard
+                task={task}
+                assignees={membersFor(task)}
+                onOpen={() => setOpenTaskId(task.id)}
+              />
             </li>
           ))}
         </ol>
       </SortableContext>
       <AddTaskForm boardId={boardId} stage={stage} />
       {openTask && (
-        <TaskDialog task={openTask} onClose={() => setOpenTaskId(null)} />
+        <TaskDialog
+          task={openTask}
+          members={members}
+          onClose={() => setOpenTaskId(null)}
+        />
       )}
       {confirmingDelete && (
         <ConfirmDialog

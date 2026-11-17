@@ -4,7 +4,12 @@
 
 import {publish} from '../../utils/events.js';
 import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
-import {createTask, deleteTask, updateTask} from './tasks.service.js';
+import {
+  createTask,
+  deleteTask,
+  setAssignees,
+  updateTask,
+} from './tasks.service.js';
 
 const description = {type: 'string', maxLength: 5000};
 
@@ -78,6 +83,37 @@ export default async function taskRoutes(app) {
       const task = deleteTask(app.db, request.params.taskId, request.user.id);
       publish(app, request, task.boardId, 'task.deleted', {taskId: task.id});
       return reply.status(204).send();
+    },
+  );
+
+  app.put(
+    '/tasks/:taskId/assignees',
+    {
+      schema: {
+        params: idParams('taskId'),
+        body: {
+          type: 'object',
+          required: ['userIds'],
+          additionalProperties: false,
+          properties: {
+            userIds: {
+              type: 'array',
+              maxItems: 50,
+              items: {type: 'integer', minimum: 1},
+            },
+          },
+        },
+      },
+    },
+    async (request) => {
+      const task = setAssignees(
+        app.db,
+        request.params.taskId,
+        request.body.userIds,
+        request.user.id,
+      );
+      publish(app, request, task.boardId, 'task.updated', {task});
+      return {task};
     },
   );
 }

@@ -1,26 +1,59 @@
 /**
- * @fileoverview Edit a task's title and description, or delete it.
+ * @fileoverview Edit a task's title, description and assignees, or
+ * delete it.
  */
 
-import {useState} from 'react';
+import {useId, useState} from 'react';
 import * as api from '../../api/boards.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
+import {Avatar} from '../../components/Avatar.jsx';
 import Modal from '../../components/Modal.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 
-/** @param {{task: !Object, onClose: function()}} props */
-export default function TaskDialog({task, onClose}) {
+/**
+ * @param {{task: !Object, members: !Array<!Object>, onClose: function()}}
+ *     props `members` are the people who can be assigned on this board.
+ */
+export default function TaskDialog({task, members, onClose}) {
+  const assigneesId = useId();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
+  const [assigneeIds, setAssigneeIds] = useState(
+    () => new Set(task.assigneeIds),
+  );
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const save = useBoardMutation((input) => api.updateTask(task.id, input));
+  const save = useBoardMutation(async ({assignees, ...fields}) => {
+    await api.updateTask(task.id, fields);
+    const changed =
+      assignees.length !== task.assigneeIds.length ||
+      assignees.some((id) => !task.assigneeIds.includes(id));
+    if (changed) {
+      await api.setAssignees(task.id, assignees);
+    }
+  });
+
+  function toggleAssignee(userId) {
+    setAssigneeIds((current) => {
+      const next = new Set(current);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
   const remove = useBoardMutation(() => api.deleteTask(task.id));
 
   async function handleSubmit(event) {
     event.preventDefault();
     try {
-      await save.mutateAsync({title: title.trim(), description});
+      await save.mutateAsync({
+        title: title.trim(),
+        description,
+        assignees: [...assigneeIds].sort((a, b) => a - b),
+      });
       onClose();
     } catch {
       // Shown via save.error.
@@ -65,6 +98,20 @@ export default function TaskDialog({task, onClose}) {
             onChange={(event) => setDescription(event.target.value)}
           />
         </label>
+        <fieldset className="assignees" aria-labelledby={assigneesId}>
+          <legend id={assigneesId}>Assigned to</legend>
+          {members.map((member) => (
+            <label key={member.id} className="assignee-option">
+              <input
+                type="checkbox"
+                checked={assigneeIds.has(member.id)}
+                onChange={() => toggleAssignee(member.id)}
+              />
+              <Avatar user={member} />
+              <span>{member.displayName}</span>
+            </label>
+          ))}
+        </fieldset>
         <ErrorMessage error={save.error} />
         <div className="dialog-actions split">
           <button
