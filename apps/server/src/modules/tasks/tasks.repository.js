@@ -2,6 +2,8 @@
  * @fileoverview SQL access for tasks.
  */
 
+import {STEP} from '../../utils/position.js';
+
 /** @param {!Object} db @param {number} id */
 export function findTask(db, id) {
   return db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
@@ -75,4 +77,21 @@ export function listAssigneeIds(db, taskId) {
     )
     .all(taskId)
     .map((row) => row.user_id);
+}
+
+/**
+ * Renumbers positions in one container to evenly spaced steps, keeping the
+ * current order. Used when neighbours get too close to split. The order is
+ * read first: a single correlated UPDATE would re-rank rows mid-update.
+ * @param {!Object} db
+ * @param {number} containerId
+ */
+export function rebalanceTasks(db, containerId) {
+  const ids = db
+    .prepare('SELECT id FROM tasks WHERE stage_id = ? ORDER BY position, id')
+    .all(containerId);
+  const update = db.prepare('UPDATE tasks SET position = ? WHERE id = ?');
+  db.transaction(() => {
+    ids.forEach(({id}, i) => update.run((i + 1) * STEP, id));
+  })();
 }

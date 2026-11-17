@@ -57,6 +57,7 @@ export function updateStage(db, stageId, input, userId) {
         nextId: input.nextId ?? null,
         find: (id) => repo.findStage(db, id),
         belongs: (row) => row.board_id === stage.board_id,
+        rebalance: () => repo.rebalanceStages(db, stage.board_id),
       })
     : stage.position;
   return toStage(

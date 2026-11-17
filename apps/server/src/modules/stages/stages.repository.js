@@ -2,6 +2,8 @@
  * @fileoverview SQL access for stages.
  */
 
+import {STEP} from '../../utils/position.js';
+
 /** @param {!Object} db @param {number} id */
 export function findStage(db, id) {
   return db.prepare('SELECT * FROM stages WHERE id = ?').get(id);
@@ -59,4 +61,21 @@ export function updateStage(db, id, {name, position}) {
 /** @param {!Object} db @param {number} id */
 export function deleteStage(db, id) {
   db.prepare('DELETE FROM stages WHERE id = ?').run(id);
+}
+
+/**
+ * Renumbers positions in one container to evenly spaced steps, keeping the
+ * current order. Used when neighbours get too close to split. The order is
+ * read first: a single correlated UPDATE would re-rank rows mid-update.
+ * @param {!Object} db
+ * @param {number} containerId
+ */
+export function rebalanceStages(db, containerId) {
+  const ids = db
+    .prepare('SELECT id FROM stages WHERE board_id = ? ORDER BY position, id')
+    .all(containerId);
+  const update = db.prepare('UPDATE stages SET position = ? WHERE id = ?');
+  db.transaction(() => {
+    ids.forEach(({id}, i) => update.run((i + 1) * STEP, id));
+  })();
 }

@@ -1,14 +1,22 @@
 /**
- * @fileoverview One stage (column): header actions, its tasks and an
- * add-task form.
+ * @fileoverview One stage (column): a drag handle and header actions, its
+ * sortable tasks and an add-task form. The section is itself a drop target
+ * so tasks can be dropped into an empty stage.
  */
 
 import {useState} from 'react';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
 import * as api from '../../api/boards.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 import {pluralize} from '../boards/boardModel.js';
+import {stageDndId, taskDndId} from '../boards/dnd.js';
 import AddTaskForm from '../tasks/AddTaskForm.jsx';
 import TaskCard from '../tasks/TaskCard.jsx';
 import TaskDialog from '../tasks/TaskDialog.jsx';
@@ -39,6 +47,15 @@ export default function Stage({
   const rename = useBoardMutation((name) => api.updateStage(stage.id, {name}));
   const remove = useBoardMutation(() => api.deleteStage(stage.id));
   const openTask = tasks.find((task) => task.id === openTaskId);
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({id: stageDndId(stage.id), data: {type: 'stage'}});
 
   async function handleDelete() {
     setConfirmingDelete(false);
@@ -50,7 +67,12 @@ export default function Stage({
   }
 
   return (
-    <section className="stage" aria-label={stage.name}>
+    <section
+      ref={setNodeRef}
+      style={{transform: CSS.Translate.toString(transform), transition}}
+      className={`stage${isDragging ? ' is-dragging' : ''}`}
+      aria-label={stage.name}
+    >
       <header className="stage-header">
         {renaming ? (
           <InlineEditForm
@@ -65,6 +87,16 @@ export default function Stage({
           />
         ) : (
           <>
+            <button
+              ref={setActivatorNodeRef}
+              type="button"
+              className="icon-button drag-handle"
+              {...attributes}
+              {...listeners}
+              aria-label={`Drag stage ${stage.name}`}
+            >
+              ⠿
+            </button>
             <h2 className="stage-title">
               {stage.name} <span className="count">{tasks.length}</span>
             </h2>
@@ -107,13 +139,18 @@ export default function Stage({
           </>
         )}
       </header>
-      <ol className="task-list">
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <TaskCard task={task} onOpen={() => setOpenTaskId(task.id)} />
-          </li>
-        ))}
-      </ol>
+      <SortableContext
+        items={tasks.map((task) => taskDndId(task.id))}
+        strategy={verticalListSortingStrategy}
+      >
+        <ol className="task-list">
+          {tasks.map((task) => (
+            <li key={task.id}>
+              <TaskCard task={task} onOpen={() => setOpenTaskId(task.id)} />
+            </li>
+          ))}
+        </ol>
+      </SortableContext>
       <AddTaskForm boardId={boardId} stage={stage} />
       {openTask && (
         <TaskDialog task={openTask} onClose={() => setOpenTaskId(null)} />

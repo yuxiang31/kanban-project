@@ -419,3 +419,29 @@ input:focus-visible {
 .confirm-body p {
   margin: 0 0 16px;
 }
+
+/* ---- Drag and drop ---- */
+
+.task-card {
+  touch-action: manipulation;
+}
+
+.task-card.is-dragging,
+.stage.is-dragging {
+  opacity: 0.4;
+}
+
+.task-card.is-overlay {
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  border-color: var(--accent);
+}
+
+.stage.is-overlay {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+
+.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}

@@ -2,7 +2,7 @@
  * @fileoverview Task routes.
  */
 
-import {idParams, nonBlank} from '../../utils/schemas.js';
+import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
 import {createTask, deleteTask, updateTask} from './tasks.service.js';
 
 const description = {type: 'string', maxLength: 5000};
@@ -47,7 +47,13 @@ export default async function taskRoutes(app) {
           type: 'object',
           minProperties: 1,
           additionalProperties: false,
-          properties: {title: nonBlank(200), description},
+          properties: {
+            title: nonBlank(200),
+            description,
+            stageId: {type: 'integer'},
+            prevId: neighbourId,
+            nextId: neighbourId,
+          },
         },
       },
     },

@@ -320,4 +320,47 @@ describe('board page', () => {
       within(confirm).getByRole('button', {name: /^delete$/i}),
     ).toBeEnabled();
   });
+
+  it('opens a task with Enter and picks it up with Space', async () => {
+    const user = await openBoard();
+    const card = screen.getByRole('button', {name: /open task write spec/i});
+    expect(card).toHaveAttribute('aria-roledescription', 'sortable');
+    card.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('dialog', {name: /edit task/i})).toBeVisible();
+    await user.keyboard('{Escape}');
+    expect(card).toHaveFocus();
+
+    await user.keyboard(' ');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() =>
+      expect(document.body).toHaveTextContent('Picked up task "Write spec".'),
+    );
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(document.body).toHaveTextContent(
+        'Moving task "Write spec" was cancelled.',
+      ),
+    );
+  });
+
+  it('gives each stage a keyboard drag handle', async () => {
+    await openBoard();
+    const handle = screen.getByRole('button', {name: /drag stage to do/i});
+    expect(handle).toHaveAttribute('aria-roledescription', 'sortable');
+    const user = userEvent.setup();
+    handle.focus();
+    await user.keyboard(' ');
+    await waitFor(() =>
+      expect(document.body).toHaveTextContent('Picked up stage "To Do".'),
+    );
+    // The overlay is a full copy of the column, tasks included.
+    expect(document.querySelector('.stage.is-overlay')).toHaveTextContent(
+      'Write spec',
+    );
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(document.querySelector('.stage.is-overlay')).toBeNull(),
+    );
+  });
 });

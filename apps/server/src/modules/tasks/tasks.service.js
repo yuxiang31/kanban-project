@@ -1,9 +1,9 @@
 /**
- * @fileoverview Task rules: create, edit and delete.
+ * @fileoverview Task rules: create, edit, move and delete.
  */
 
 import {badRequest, notFound} from '../../utils/errors.js';
-import {nextPosition} from '../../utils/position.js';
+import {nextPosition, positionFromNeighbours} from '../../utils/position.js';
 import {assertBoardAccess} from '../boards/boards.access.js';
 import {toTask} from '../boards/boards.mappers.js';
 import {findStage} from '../stages/stages.repository.js';
@@ -61,21 +61,56 @@ export function createTask(db, boardId, input, userId) {
 }
 
 /**
- * Edits a task's title and/or description.
+ * Works out where a moved task lands. A move is requested by sending
+ * `stageId` and/or `prevId`/`nextId` (the tasks it lands between, in the
+ * destination stage). With only `stageId`, the task goes to the end.
+ * @param {!Object} db
+ * @param {!Object} task The tasks row being moved.
+ * @param {{stageId?: number, prevId?: ?number, nextId?: ?number}} input
+ * @return {{stageId: number, position: number}}
+ */
+function resolveMove(db, task, input) {
+  const stageId = input.stageId ?? task.stage_id;
+  if (stageId !== task.stage_id) {
+    assertStageOnBoard(db, task.board_id, stageId);
+  }
+  const hasNeighbours = 'prevId' in input || 'nextId' in input;
+  if (!hasNeighbours) {
+    return stageId === task.stage_id
+      ? {stageId, position: task.position}
+      : {stageId, position: nextPosition(repo.maxTaskPosition(db, stageId))};
+  }
+  const position = positionFromNeighbours({
+    movingId: task.id,
+    prevId: input.prevId ?? null,
+    nextId: input.nextId ?? null,
+    find: (id) => repo.findTask(db, id),
+    belongs: (row) => row.stage_id === stageId,
+    rebalance: () => repo.rebalanceTasks(db, stageId),
+  });
+  return {stageId, position};
+}
+
+/**
+ * Edits and/or moves a task.
  * @param {!Object} db
  * @param {number} taskId
- * @param {{title?: string, description?: string}} input
+ * @param {{title?: string, description?: string, stageId?: number,
+ *     prevId?: ?number, nextId?: ?number}} input
  * @param {number} userId
  * @return {!Object}
  */
 export function updateTask(db, taskId, input, userId) {
   const task = assertTaskAccess(db, taskId, userId);
-  const row = repo.updateTask(db, task.id, {
-    stageId: task.stage_id,
-    title: input.title?.trim() ?? task.title,
-    description: input.description ?? task.description,
-    position: task.position,
-  });
+  const row = db.transaction(() => {
+    const {stageId, position} = resolveMove(db, task, input);
+    return repo.updateTask(db, task.id, {
+      stageId,
+      title: input.title?.trim() ?? task.title,
+      description: input.description ?? task.description,
+      position,
+    });
+  })();
   return toTask(row, repo.listAssigneeIds(db, task.id));
 }
 

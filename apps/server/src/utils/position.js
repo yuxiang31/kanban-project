@@ -6,7 +6,13 @@
 
 import {badRequest} from './errors.js';
 
-const STEP = 1024;
+export const STEP = 1024;
+
+/**
+ * Smallest gap we still split. Below this, midpoints lose precision, so the
+ * container is renumbered first.
+ */
+const MIN_GAP = 1e-6;
 
 /**
  * Position for an item appended after the current last one.
@@ -45,8 +51,10 @@ export function positionBetween(before, after) {
  *   nextId: ?number,
  *   find: function(number): (!Object|undefined),
  *   belongs: function(!Object): boolean,
+ *   rebalance?: function(),
  * }} args `find` loads a row with a `position`; `belongs` checks the row is
- *     in the same container (board or stage) as the destination.
+ *     in the same container (board or stage) as the destination;
+ *     `rebalance` renumbers that container when the gap is too small.
  * @return {number}
  */
 export function positionFromNeighbours({
@@ -55,6 +63,7 @@ export function positionFromNeighbours({
   nextId,
   find,
   belongs,
+  rebalance,
 }) {
   const load = (id) => {
     if (id == null) {
@@ -66,10 +75,16 @@ export function positionFromNeighbours({
     }
     return row;
   };
-  const prev = load(prevId);
-  const next = load(nextId);
+  let prev = load(prevId);
+  let next = load(nextId);
   if (prev && next && prev.position >= next.position) {
     throw badRequest('Invalid position.');
+  }
+  const gap = (next?.position ?? Infinity) - (prev?.position ?? 0);
+  if (gap < MIN_GAP && rebalance) {
+    rebalance();
+    prev = load(prevId);
+    next = load(nextId);
   }
   return positionBetween(prev?.position ?? null, next?.position ?? null);
 }

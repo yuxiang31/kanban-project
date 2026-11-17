@@ -3,22 +3,6 @@
  */
 
 /**
- * Groups a board's tasks by stage, keeping each stage's order.
- * @param {!Array<!Object>} tasks Tasks with `stageId` and `position`.
- * @return {!Map<number, !Array<!Object>>}
- */
-export function tasksByStage(tasks) {
-  const groups = new Map();
-  for (const task of [...tasks].sort((a, b) => a.position - b.position)) {
-    if (!groups.has(task.stageId)) {
-      groups.set(task.stageId, []);
-    }
-    groups.get(task.stageId).push(task);
-  }
-  return groups;
-}
-
-/**
  * The neighbours an item lands between when moved one step left (-1) or
  * right (+1) within an ordered list.
  * @param {!Array<{id: number}>} items
