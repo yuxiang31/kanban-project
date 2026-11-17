@@ -2,6 +2,7 @@
  * @fileoverview Task routes.
  */
 
+import {publish} from '../../utils/events.js';
 import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
 import {createTask, deleteTask, updateTask} from './tasks.service.js';
 
@@ -34,6 +35,7 @@ export default async function taskRoutes(app) {
         request.body,
         request.user.id,
       );
+      publish(app, request, task.boardId, 'task.created', {task});
       return reply.status(201).send({task});
     },
   );
@@ -57,21 +59,24 @@ export default async function taskRoutes(app) {
         },
       },
     },
-    async (request) => ({
-      task: updateTask(
+    async (request) => {
+      const task = updateTask(
         app.db,
         request.params.taskId,
         request.body,
         request.user.id,
-      ),
-    }),
+      );
+      publish(app, request, task.boardId, 'task.updated', {task});
+      return {task};
+    },
   );
 
   app.delete(
     '/tasks/:taskId',
     {schema: {params: idParams('taskId')}},
     async (request, reply) => {
-      deleteTask(app.db, request.params.taskId, request.user.id);
+      const task = deleteTask(app.db, request.params.taskId, request.user.id);
+      publish(app, request, task.boardId, 'task.deleted', {taskId: task.id});
       return reply.status(204).send();
     },
   );

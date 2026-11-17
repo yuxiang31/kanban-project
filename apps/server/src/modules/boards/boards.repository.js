@@ -76,3 +76,18 @@ export function listAssigneesForBoard(db, boardId) {
     )
     .all(boardId);
 }
+
+/**
+ * @param {!Object} db
+ * @param {number} teamId
+ * @return {!Array<!Object>} The team's boards, with `team_name`.
+ */
+export function listBoardsOfTeam(db, teamId) {
+  return db
+    .prepare(
+      `SELECT b.*, t.name AS team_name
+       FROM boards b JOIN teams t ON t.id = b.team_id
+       WHERE b.team_id = ?`,
+    )
+    .all(teamId);
+}

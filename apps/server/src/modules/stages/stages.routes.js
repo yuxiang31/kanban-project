@@ -2,6 +2,7 @@
  * @fileoverview Stage routes.
  */
 
+import {publish} from '../../utils/events.js';
 import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
 import {createStage, deleteStage, updateStage} from './stages.service.js';
 
@@ -28,6 +29,7 @@ export default async function stageRoutes(app) {
         request.body,
         request.user.id,
       );
+      publish(app, request, stage.boardId, 'stage.created', {stage});
       return reply.status(201).send({stage});
     },
   );
@@ -49,21 +51,30 @@ export default async function stageRoutes(app) {
         },
       },
     },
-    async (request) => ({
-      stage: updateStage(
+    async (request) => {
+      const stage = updateStage(
         app.db,
         request.params.stageId,
         request.body,
         request.user.id,
-      ),
-    }),
+      );
+      publish(app, request, stage.boardId, 'stage.updated', {stage});
+      return {stage};
+    },
   );
 
   app.delete(
     '/stages/:stageId',
     {schema: {params: idParams('stageId')}},
     async (request, reply) => {
-      deleteStage(app.db, request.params.stageId, request.user.id);
+      const stage = deleteStage(
+        app.db,
+        request.params.stageId,
+        request.user.id,
+      );
+      publish(app, request, stage.boardId, 'stage.deleted', {
+        stageId: stage.id,
+      });
       return reply.status(204).send();
     },
   );

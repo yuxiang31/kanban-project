@@ -9,6 +9,7 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import dbPlugin from './plugins/db.js';
 import authPlugin from './plugins/auth.js';
+import realtimePlugin from './plugins/realtime.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import boardRoutes from './modules/boards/boards.routes.js';
 import stageRoutes from './modules/stages/stages.routes.js';
@@ -51,6 +52,7 @@ export async function buildApp(opts) {
     jwtSecret: opts.jwtSecret,
     cookieSecure: opts.cookieSecure ?? false,
   });
+  await app.register(realtimePlugin);
 
   await app.register(
     async (api) => {

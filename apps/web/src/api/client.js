@@ -3,6 +3,13 @@
  * and turns non-2xx responses into ApiError.
  */
 
+/**
+ * Identifies this browser tab. Sent with every request so live events
+ * caused by this tab can be recognised and skipped (the tab already shows
+ * its own changes), while the same user's other tabs still update.
+ */
+export const CLIENT_ID = globalThis.crypto.randomUUID();
+
 /** An error response from the API. */
 export class ApiError extends Error {
   /**
@@ -26,7 +33,10 @@ export async function apiFetch(path, {method = 'GET', body} = {}) {
   const res = await fetch(`/api${path}`, {
     method,
     credentials: 'include',
-    headers: hasBody ? {'Content-Type': 'application/json'} : {},
+    headers: {
+      'X-Client-Id': CLIENT_ID,
+      ...(hasBody && {'Content-Type': 'application/json'}),
+    },
     body: hasBody ? JSON.stringify(body) : undefined,
   });
   if (res.status === 204) {

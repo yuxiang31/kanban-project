@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Link} from 'react-router';
+import {Link, useLocation, useNavigate} from 'react-router';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import {useBoards} from './boardQueries.js';
 import {groupBoardsByTeam, pluralize} from './boardModel.js';
@@ -8,6 +8,10 @@ import CreateBoardDialog from './CreateBoardDialog.jsx';
 export default function BoardListPage() {
   const boards = useBoards();
   const [creating, setCreating] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Set when a board was left involuntarily (deleted, access lost).
+  const notice = location.state?.notice;
 
   return (
     <main className="page">
@@ -21,6 +25,19 @@ export default function BoardListPage() {
           New board
         </button>
       </div>
+      {notice && (
+        <div className="notice" role="status">
+          <span>{notice}</span>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Dismiss"
+            onClick={() => navigate('.', {replace: true, state: null})}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {boards.isPending && <p role="status">Loading boards…</p>}
       <ErrorMessage error={boards.error} />
       {boards.data?.length === 0 && (

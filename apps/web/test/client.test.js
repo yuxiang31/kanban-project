@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {ApiError, apiFetch} from '../src/api/client.js';
+import {ApiError, CLIENT_ID, apiFetch} from '../src/api/client.js';
 import {mockFetch} from './utils.jsx';
 
 describe('apiFetch', () => {
@@ -10,6 +10,13 @@ describe('apiFetch', () => {
       '/api/things',
       expect.objectContaining({method: 'GET', credentials: 'include'}),
     );
+  });
+
+  it('identifies this tab so it can skip its own live events', async () => {
+    const fetch = mockFetch({'GET /api/things': {body: {}}});
+    await apiFetch('/things');
+    expect(CLIENT_ID).toMatch(/^[A-Za-z0-9_-]{1,64}$/);
+    expect(fetch.mock.calls[0][1].headers['X-Client-Id']).toBe(CLIENT_ID);
   });
 
   it('sends a JSON body', async () => {

@@ -23,6 +23,7 @@ import * as api from '../../api/boards.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
+import {useBoardSocket} from '../../hooks/useBoardSocket.js';
 import AddStageForm from '../stages/AddStageForm.jsx';
 import Stage from '../stages/Stage.jsx';
 import {boardKey, useBoard, useBoardMutation} from './boardQueries.js';
@@ -79,6 +80,23 @@ function BoardView({board}) {
   const [actionError, setActionError] = useState(null);
 
   const rename = useBoardMutation((name) => api.renameBoard(board.id, {name}));
+
+  /** Leaves a board that is gone, explaining why on the board list. */
+  function leaveBoard(notice) {
+    queryClient.removeQueries({queryKey: boardKey(board.id)});
+    queryClient.invalidateQueries({queryKey: ['boards'], exact: true});
+    navigate('/', {replace: true, state: {notice}});
+  }
+  const liveStatus = useBoardSocket(board.id, {
+    onBoardDeleted: (actorName) =>
+      leaveBoard(
+        actorName
+          ? `“${board.name}” was deleted by ${actorName}.`
+          : `“${board.name}” was deleted.`,
+      ),
+    onAccessLost: () =>
+      leaveBoard(`You no longer have access to “${board.name}”.`),
+  });
   const moveTask = useMoveTask(board.id);
   const moveStage = useMoveStage(board.id);
 
@@ -148,6 +166,16 @@ function BoardView({board}) {
           </div>
         )}
         <div className="board-actions">
+          <span
+            className={`live-status is-${liveStatus}`}
+            title="Changes by others appear automatically"
+          >
+            {liveStatus === 'live'
+              ? 'Live'
+              : liveStatus === 'reconnecting'
+                ? 'Reconnecting…'
+                : 'Connecting…'}
+          </span>
           {!renaming && (
             <button
               type="button"

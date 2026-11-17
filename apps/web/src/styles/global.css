@@ -540,3 +540,42 @@ input:focus-visible {
   gap: 6px;
   flex-shrink: 0;
 }
+
+/* ---- Live updates ---- */
+
+.live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.live-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.live-status.is-live::before {
+  background: #2e9e5b;
+}
+
+.live-status.is-reconnecting::before {
+  background: #d99a1e;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+}
