@@ -2,6 +2,8 @@ import {useId, useState} from 'react';
 import {Link, useNavigate} from 'react-router';
 import * as api from '../../api/teams.js';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
+import LoadError from '../../components/LoadError.jsx';
+import Skeleton from '../../components/Skeleton.jsx';
 import {pluralize} from '../boards/boardModel.js';
 import {useTeamMutation, useTeams} from './teamQueries.js';
 
@@ -48,8 +50,8 @@ export default function TeamsPage() {
         </button>
       </form>
       <ErrorMessage error={create.error} />
-      {teams.isPending && <p role="status">Loading teams…</p>}
-      <ErrorMessage error={teams.error} />
+      {teams.isPending && <Skeleton label="Loading teams…" />}
+      <LoadError error={teams.error} onRetry={() => teams.refetch()} />
       {teams.data?.length === 0 && (
         <p className="empty-state">You are not in any teams yet.</p>
       )}

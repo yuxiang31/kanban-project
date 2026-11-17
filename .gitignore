@@ -5,3 +5,6 @@ data/
 *.db
 *.db-*
 .env
+
+# Design review screenshots (regenerate with the capture script)
+design/review/*.png

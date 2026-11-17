@@ -28,28 +28,28 @@ export function listBoardsForUser(db, userId) {
 /**
  * @param {!Object} db
  * @param {{name: string, ownerUserId: ?number, teamId: ?number,
- *     createdBy: number}} board
+ *     createdBy: number, color?: ?string}} board
  * @return {!Object} The inserted row.
  */
-export function insertBoard(db, {name, ownerUserId, teamId, createdBy}) {
+export function insertBoard(db, {name, ownerUserId, teamId, createdBy, color}) {
   return db
     .prepare(
-      `INSERT INTO boards (name, owner_user_id, team_id, created_by)
-       VALUES (?, ?, ?, ?) RETURNING *`,
+      `INSERT INTO boards (name, owner_user_id, team_id, created_by, color)
+       VALUES (?, ?, ?, ?, ?) RETURNING *`,
     )
-    .get(name, ownerUserId, teamId, createdBy);
+    .get(name, ownerUserId, teamId, createdBy, color ?? null);
 }
 
 /**
  * @param {!Object} db
  * @param {number} id
- * @param {string} name
+ * @param {{name: string, color: ?string}} fields
  * @return {!Object} The updated row.
  */
-export function renameBoard(db, id, name) {
+export function updateBoard(db, id, {name, color}) {
   return db
-    .prepare('UPDATE boards SET name = ? WHERE id = ? RETURNING *')
-    .get(name, id);
+    .prepare('UPDATE boards SET name = ?, color = ? WHERE id = ? RETURNING *')
+    .get(name, color, id);
 }
 
 /**

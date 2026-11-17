@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router';
 import * as api from '../../api/boards.js';
+import ColorPicker from '../../components/ColorPicker.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import Modal from '../../components/Modal.jsx';
 import {useTeams} from '../teams/teamQueries.js';
@@ -11,6 +12,7 @@ export default function CreateBoardDialog({onClose}) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [color, setColor] = useState(null);
   const teams = useTeams();
   const create = useBoardMutation(api.createBoard);
 
@@ -19,6 +21,7 @@ export default function CreateBoardDialog({onClose}) {
     const board = await create.mutateAsync({
       name: name.trim(),
       ...(teamId && {teamId: Number(teamId)}),
+      ...(color && {color}),
     });
     navigate(`/boards/${board.id}`);
   }
@@ -48,6 +51,7 @@ export default function CreateBoardDialog({onClose}) {
             ))}
           </select>
         </label>
+        <ColorPicker value={color} onChange={setColor} />
         <p className="muted small">
           Starts with To Do, In Progress and Done. You can change the stages
           later.

@@ -8,6 +8,7 @@ import * as api from '../../api/boards.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import {Avatar} from '../../components/Avatar.jsx';
+import ColorPicker from '../../components/ColorPicker.jsx';
 import Modal from '../../components/Modal.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 
@@ -19,6 +20,7 @@ export default function TaskDialog({task, members, onClose}) {
   const assigneesId = useId();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
+  const [color, setColor] = useState(task.color ?? null);
   const [assigneeIds, setAssigneeIds] = useState(
     () => new Set(task.assigneeIds),
   );
@@ -52,6 +54,7 @@ export default function TaskDialog({task, members, onClose}) {
       await save.mutateAsync({
         title: title.trim(),
         description,
+        color,
         assignees: [...assigneeIds].sort((a, b) => a - b),
       });
       onClose();
@@ -82,11 +85,23 @@ export default function TaskDialog({task, members, onClose}) {
       <form className="form" onSubmit={handleSubmit}>
         <label>
           Title
-          <input
+          {/* A growing textarea so long titles wrap and stay fully visible;
+              Enter still saves, since a title never needs a line break. */}
+          <textarea
+            className="title-field"
             value={title}
             maxLength={200}
+            rows={1}
             required
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(event) =>
+              setTitle(event.target.value.replace(/\n/g, ' '))
+            }
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                event.currentTarget.form.requestSubmit();
+              }
+            }}
           />
         </label>
         <label>
@@ -98,6 +113,7 @@ export default function TaskDialog({task, members, onClose}) {
             onChange={(event) => setDescription(event.target.value)}
           />
         </label>
+        <ColorPicker value={color} onChange={setColor} />
         <fieldset className="assignees" aria-labelledby={assigneesId}>
           <legend id={assigneesId}>Assigned to</legend>
           {members.map((member) => (

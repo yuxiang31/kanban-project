@@ -28,25 +28,27 @@ export function maxTaskPosition(db, stageId) {
 /**
  * @param {!Object} db
  * @param {{boardId: number, stageId: number, title: string,
- *     description: string, position: number, createdBy: number}} task
+ *     description: string, position: number, createdBy: number,
+ *     color?: ?string}} task
  * @return {!Object} The inserted row.
  */
 export function insertTask(db, task) {
   return db
     .prepare(
       `INSERT INTO tasks
-         (board_id, stage_id, title, description, position, created_by)
-       VALUES (@boardId, @stageId, @title, @description, @position, @createdBy)
+         (board_id, stage_id, title, description, position, created_by, color)
+       VALUES (@boardId, @stageId, @title, @description, @position, @createdBy,
+               @color)
        RETURNING *`,
     )
-    .get(task);
+    .get({color: null, ...task});
 }
 
 /**
  * @param {!Object} db
  * @param {number} id
  * @param {{stageId: number, title: string, description: string,
- *     position: number}} fields
+ *     position: number, color: ?string}} fields
  * @return {!Object} The updated row.
  */
 export function updateTask(db, id, fields) {
@@ -54,7 +56,7 @@ export function updateTask(db, id, fields) {
     .prepare(
       `UPDATE tasks
        SET stage_id = @stageId, title = @title, description = @description,
-           position = @position, updated_at = datetime('now')
+           position = @position, color = @color, updated_at = datetime('now')
        WHERE id = @id RETURNING *`,
     )
     .get({...fields, id});

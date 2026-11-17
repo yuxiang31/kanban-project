@@ -30,18 +30,21 @@ export default function TaskCard({task, assignees, onOpen}) {
     listeners?.onKeyDown?.(event);
   }
 
-  const label =
-    assignees.length > 0
-      ? `Open task ${task.title}, assigned to ${listNames(
-          assignees.map((a) => a.displayName),
-        )}`
-      : `Open task ${task.title}`;
+  const label = [
+    `Open task ${task.title}`,
+    assignees.length > 0 &&
+      `assigned to ${listNames(assignees.map((a) => a.displayName))}`,
+    task.color && `colour ${task.color}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <div
       ref={setNodeRef}
       style={{transform: CSS.Translate.toString(transform), transition}}
       className={`task-card${isDragging ? ' is-dragging' : ''}`}
+      data-color={task.color ?? undefined}
       {...attributes}
       {...listeners}
       aria-label={label}

@@ -59,6 +59,7 @@ export function createTask(db, boardId, input, userId) {
     description: input.description ?? '',
     position: nextPosition(repo.maxTaskPosition(db, input.stageId)),
     createdBy: userId,
+    color: input.color ?? null,
   });
   return toTask(row);
 }
@@ -98,8 +99,8 @@ function resolveMove(db, task, input) {
  * Edits and/or moves a task.
  * @param {!Object} db
  * @param {number} taskId
- * @param {{title?: string, description?: string, stageId?: number,
- *     prevId?: ?number, nextId?: ?number}} input
+ * @param {{title?: string, description?: string, color?: ?string,
+ *     stageId?: number, prevId?: ?number, nextId?: ?number}} input
  * @param {number} userId
  * @return {!Object}
  */
@@ -112,6 +113,7 @@ export function updateTask(db, taskId, input, userId) {
       title: input.title?.trim() ?? task.title,
       description: input.description ?? task.description,
       position,
+      color: 'color' in input ? input.color : task.color,
     });
   })();
   return toTask(row, repo.listAssigneeIds(db, task.id));

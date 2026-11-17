@@ -73,11 +73,11 @@ export function getBoard(db, boardId, userId) {
  * Creates a board seeded with the default stages: personal, or shared with
  * a team the user belongs to.
  * @param {!Object} db
- * @param {{name: string, teamId?: number}} input
+ * @param {{name: string, teamId?: number, color?: ?string}} input
  * @param {number} userId
  * @return {!Object} The full board.
  */
-export function createBoard(db, {name, teamId}, userId) {
+export function createBoard(db, {name, teamId, color}, userId) {
   if (teamId != null) {
     assertTeamMember(db, teamId, userId);
   }
@@ -87,6 +87,7 @@ export function createBoard(db, {name, teamId}, userId) {
       ownerUserId: teamId == null ? userId : null,
       teamId: teamId ?? null,
       createdBy: userId,
+      color,
     });
     let position = null;
     for (const stageName of DEFAULT_STAGES) {
@@ -99,15 +100,19 @@ export function createBoard(db, {name, teamId}, userId) {
 }
 
 /**
+ * Renames a board and/or changes its colour (null clears it).
  * @param {!Object} db
  * @param {number} boardId
- * @param {{name: string}} input
+ * @param {{name?: string, color?: ?string}} input
  * @param {number} userId
  * @return {!Object} The board summary.
  */
-export function renameBoard(db, boardId, {name}, userId) {
-  assertBoardAccess(db, boardId, userId);
-  repo.renameBoard(db, boardId, name.trim());
+export function updateBoard(db, boardId, input, userId) {
+  const board = assertBoardAccess(db, boardId, userId);
+  repo.updateBoard(db, boardId, {
+    name: input.name?.trim() ?? board.name,
+    color: 'color' in input ? input.color : board.color,
+  });
   return toBoardSummary(assertBoardAccess(db, boardId, userId));
 }
 

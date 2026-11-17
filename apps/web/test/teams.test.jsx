@@ -136,7 +136,8 @@ describe('team detail as member', () => {
     expect(
       await screen.findByRole('heading', {level: 1, name: 'Teams'}),
     ).toBeVisible();
-    expect(screen.getByText(/not in any teams/i)).toBeVisible();
+    // The heading renders before the refetched (now empty) list arrives.
+    expect(await screen.findByText(/not in any teams/i)).toBeVisible();
   });
 
   it('shows not found for a team I am not in', async () => {
@@ -224,7 +225,8 @@ describe('team administration', () => {
     expect(
       await screen.findByRole('heading', {level: 1, name: 'Teams'}),
     ).toBeVisible();
-    expect(screen.getByText(/not in any teams/i)).toBeVisible();
+    // The heading renders before the refetched (now empty) list arrives.
+    expect(await screen.findByText(/not in any teams/i)).toBeVisible();
     expect(api.state.boards).toEqual([]);
   });
 

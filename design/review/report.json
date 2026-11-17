@@ -1,0 +1,105 @@
+{
+  "contract": "design/contract.md (decisions D1–D11, content-state table, finish gate)",
+  "targetViewports": ["390x844", "1440x900"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Keyboard: focusing a task card shows a 2px solid ink outline (measured, keyboard-focus-*.png); Space picks up and Enter opens a task (web tests). Labels: every control has an accessible name (tests query by role+name; avatars and icons are aria-hidden with names in text/labels). Contrast (computed WCAG ratios): ink on paper 17.61, muted #63666f on Mist 5.13 / Fog 5.50, danger 6.66, sienna on peach 9.27, avatar initials ≥14.08; dark mode muted ≥5.45, ink on card 12.65. Design.md's slate #777b86 (3.78 on Mist) was replaced for this reason (D11). Reduced motion: with prefers-reduced-motion the task card transition is 0s and animations are none (measured, reduced-motion-desktop.png). Touch targets on a 390px touch viewport: one element under 24px, the inline 'Platform' link inside the 'Shared with Platform' sentence (51x16), which WCAG 2.5.8 exempts as an inline link; buttons are 44px and icon buttons 40px on coarse pointers."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "All 35 captures at 390x844 and 1440x900 have zero horizontal page overflow (document scrollWidth - clientWidth = 0); the stage row scrolls horizontally on purpose with the next stage peeking in on phones (board-mobile.png). Long content wraps: an 80-character board name wraps in its card (boards-*.png); a 100-character task title wraps on the card and, after a fix, in the dialog title field (task-dialog-mobile.png). Header, board actions and filter chips wrap cleanly at 390px."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Board list request delayed 4s: three skeleton cards in the final grid shape with a visually hidden 'Loading boards…' status (boards-loading-*.png); board and team pages use stage/card skeletons (web test states.test.jsx)."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "A user with no boards sees 'No boards yet. A board holds the stages your work moves through.' with a 'Create your first board' button that opens the dialog (boards-empty-*.png, states.test.jsx). Empty stages say 'No tasks yet' next to 'Add task'."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Board list returning 500 shows the server message in a role=alert with a 'Try again' button that refetches (boards-error-*.png, states.test.jsx); same for teams. Unknown board shows 'Board not found.' with 'Back to boards' (board-not-found-*.png). Failed saves keep the dialog and its input with the message (web tests)."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Person filter active: 'Showing 2 of 8 tasks' with 'Clear filter', the pressed chip filled in ink, and stage counts showing only visible tasks (board-filtered-*.png). Dropped live connection shows a 'Reconnecting…' pill (amber dot); this one is verified by web tests only, not in a screenshot."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "Deleting a board returns to the list with the page's one peach notice '“Old experiments” was deleted.' and a dismiss button (deleted-notice-*.png); created boards/teams open directly and added tasks appear with the input refocused (web tests)."
+    },
+    "permission": {
+      "status": "pass",
+      "evidence": "A team member (not owner) sees no add/remove/rename/delete controls and the line 'Only Alice Martin (the owner) can add or remove members.' plus 'Leave team' (team-member-*.png) versus the owner's view with those controls (team-owner-*.png). Board delete is hidden for non-deleters and an access-lost notice is shown when removed from a team (web tests)."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "board-desktop.png",
+      "observation": "Main surface: serif 30px board title (Source Serif 4, weight 400, measured), flat Mist stage columns at 24px radius with no shadow, white task cards at 16px radius as the only shadowed objects, pill buttons, filter chips; stage names align with card text."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "board-mobile.png",
+      "observation": "Board at phone width: 26px title, actions and chips wrap, stage is 85vw with the next stage peeking in; 100-character task title wraps inside its card with avatars beside it."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "dragging-desktop.png",
+      "observation": "Mid-drag: the lifted task is a tilted peach card with sienna text (rgb 251,225,209 / 93,42,26 measured) while a faded placeholder holds its slot; the only peach on the board."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "dragging-mobile.png",
+      "observation": "Same peach drag overlay at phone width; no overflow."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "board-dark-desktop.png",
+      "observation": "Dark mode: warm near-black page, stage columns darker than cards so cards read as raised (fixed after first capture showed them sunken), off-white ink, muted red delete."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "board-dark-mobile.png",
+      "observation": "Dark mode at phone width; same surface order and wrapping."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "task-dialog-mobile.png",
+      "observation": "Edit dialog: serif title, full long task title wrapping in a growing field, description, 'Assigned to' checkboxes with tinted avatars, Delete task / Cancel / Save pills."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "boards-desktop.png",
+      "observation": "Boards list: 40px serif page title, Personal and Platform sections in muted labels, Mist cards with serif names; an 80-character name wraps."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "boards-empty-mobile.png",
+      "observation": "Empty state card with explanation and 'Create your first board' ghost pill under the filled 'New board' pill."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "deleted-notice-desktop.png",
+      "observation": "Success notice in peach with sienna text and a close icon above the remaining boards."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "keyboard-focus-desktop.png",
+      "observation": "Keyboard focus on the first task card: 2px ink outline with offset; stage actions revealed by focus-within."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "team-member-mobile.png",
+      "observation": "Member view of a team: no management controls, a sentence naming the owner, 'Leave team', Owner/You labels as quiet text."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "login-desktop.png",
+      "observation": "Auth: the one display-size serif ('Log in', 56px), form on a white floating card, full-width ink pill, focus ring on the autofocused field."
+    }
+  ]
+}

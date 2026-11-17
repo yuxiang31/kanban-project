@@ -64,6 +64,17 @@ describe('assignees on cards', () => {
 });
 
 describe('assigning in the task dialog', () => {
+  it('shows a long title in full and saves it with Enter', async () => {
+    const user = await openBoard();
+    await user.click(screen.getByRole('button', {name: /open task ship it/i}));
+    const title = screen.getByRole('textbox', {name: 'Title'});
+    expect(title.tagName).toBe('TEXTAREA');
+    await user.clear(title);
+    await user.type(title, 'Ship it to everyone{Enter}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(tasks.ship.title).toBe('Ship it to everyone');
+  });
+
   it('assigns and unassigns people', async () => {
     const user = await openBoard();
     await user.click(screen.getByRole('button', {name: /open task ship it/i}));

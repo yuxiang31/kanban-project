@@ -9,6 +9,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import * as api from '../../api/teams.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
+import Skeleton from '../../components/Skeleton.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import {useAuth} from '../../hooks/useAuth.js';
 import {pluralize} from '../boards/boardModel.js';
@@ -20,9 +21,9 @@ export default function TeamDetailPage() {
 
   if (team.isPending) {
     return (
-      <p role="status" className="page">
-        Loading team…
-      </p>
+      <main className="page">
+        <Skeleton label="Loading team…" count={2} />
+      </main>
     );
   }
   if (team.error) {
@@ -112,7 +113,16 @@ function TeamView({team}) {
           )}
         </div>
       </div>
-      {team.isOwner && <AddMemberForm teamId={team.id} />}
+      {team.isOwner ? (
+        <AddMemberForm teamId={team.id} />
+      ) : (
+        <p className="muted permission-note">
+          Only{' '}
+          {team.members.find((m) => m.id === team.ownerId)?.displayName ??
+            'the owner'}{' '}
+          (the owner) can add or remove members.
+        </p>
+      )}
       <h2 className="section-title">Members</h2>
       <ul className="member-list">
         {team.members.map((member) => (

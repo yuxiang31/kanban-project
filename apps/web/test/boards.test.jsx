@@ -88,7 +88,11 @@ describe('board list', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', {name: /new board/i}));
     await user.type(screen.getByLabelText(/board name/i), 'Roadmap');
-    await user.click(screen.getByRole('button', {name: /create/i}));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: /^create$/i,
+      }),
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Could not save.',
     );

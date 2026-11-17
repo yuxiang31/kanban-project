@@ -22,7 +22,9 @@ import {
 import * as api from '../../api/boards.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
+import Skeleton from '../../components/Skeleton.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
+import BoardColorDialog from './BoardColorDialog.jsx';
 import {useBoardSocket} from '../../hooks/useBoardSocket.js';
 import AddStageForm from '../stages/AddStageForm.jsx';
 import Stage from '../stages/Stage.jsx';
@@ -62,9 +64,9 @@ export default function BoardPage() {
 
   if (board.isPending) {
     return (
-      <p role="status" className="page">
-        Loading board…
-      </p>
+      <main className="board-page">
+        <Skeleton label="Loading board…" variant="stages" />
+      </main>
     );
   }
   if (board.error) {
@@ -83,6 +85,7 @@ function BoardView({board}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
+  const [choosingColor, setChoosingColor] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [actionError, setActionError] = useState(null);
 
@@ -166,7 +169,10 @@ function BoardView({board}) {
     await api.deleteBoard(board.id);
     queryClient.removeQueries({queryKey: boardKey(board.id)});
     await queryClient.invalidateQueries({queryKey: ['boards'], exact: true});
-    navigate('/', {replace: true});
+    navigate('/', {
+      replace: true,
+      state: {notice: `“${board.name}” was deleted.`},
+    });
   }
 
   const collisionDetection = useMemo(
@@ -194,7 +200,16 @@ function BoardView({board}) {
           />
         ) : (
           <div>
-            <h1>{board.name}</h1>
+            <h1>
+              {board.color && (
+                <span
+                  className="board-color-dot"
+                  data-color={board.color}
+                  aria-hidden="true"
+                />
+              )}
+              {board.name}
+            </h1>
             {board.team && (
               <p className="muted small board-team">
                 Shared with{' '}
@@ -214,6 +229,21 @@ function BoardView({board}) {
                 ? 'Reconnecting…'
                 : 'Connecting…'}
           </span>
+          <button
+            type="button"
+            className="button"
+            aria-label="Board colour"
+            onClick={() => setChoosingColor(true)}
+          >
+            {board.color && (
+              <span
+                className="swatch-dot"
+                data-color={board.color}
+                aria-hidden="true"
+              />
+            )}
+            Colour
+          </button>
           {!renaming && (
             <button
               type="button"
@@ -292,6 +322,12 @@ function BoardView({board}) {
           )}
         </DragOverlay>
       </DndContext>
+      {choosingColor && (
+        <BoardColorDialog
+          board={board}
+          onClose={() => setChoosingColor(false)}
+        />
+      )}
       {confirmingDelete && (
         <ConfirmDialog
           title="Delete board?"

@@ -2,16 +2,19 @@
  * @fileoverview Small helpers for showing people.
  */
 
-/** Distinct avatar colors with white text at AA contrast. */
+/**
+ * Soft tints that tell people apart while staying quiet (contract D7).
+ * Initials are ink (#17191c) on every tint, all above 12:1 contrast.
+ */
 const AVATAR_COLORS = [
-  '#2f6fde',
-  '#b5446e',
-  '#2e8540',
-  '#a35d00',
-  '#6d4fc2',
-  '#00798c',
-  '#c0392b',
-  '#5a6472',
+  '#dfe9f7',
+  '#e3f1e6',
+  '#fbe1d1',
+  '#ece4f6',
+  '#f7e3ea',
+  '#dff0f1',
+  '#f3efd9',
+  '#e6e7eb',
 ];
 
 /**

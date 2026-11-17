@@ -6,6 +6,7 @@
 import {useId, useRef, useState} from 'react';
 import * as api from '../../api/boards.js';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
+import {PlusIcon} from '../../components/Icons.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 
 /** @param {{boardId: number, stage: !Object}} props */
@@ -39,7 +40,8 @@ export default function AddTaskForm({boardId, stage}) {
         aria-label={`Add task to ${stage.name}`}
         onClick={() => setOpen(true)}
       >
-        + Add task
+        <PlusIcon />
+        Add task
       </button>
     );
   }

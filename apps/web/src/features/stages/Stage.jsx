@@ -17,6 +17,13 @@ import InlineEditForm from '../../components/InlineEditForm.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 import {pluralize} from '../boards/boardModel.js';
 import {stageDndId, taskDndId} from '../boards/dnd.js';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  GripIcon,
+  PencilIcon,
+  TrashIcon,
+} from '../../components/Icons.jsx';
 import AddTaskForm from '../tasks/AddTaskForm.jsx';
 import TaskCard from '../tasks/TaskCard.jsx';
 import TaskDialog from '../tasks/TaskDialog.jsx';
@@ -93,20 +100,20 @@ export default function Stage({
           />
         ) : (
           <>
-            <button
-              ref={setActivatorNodeRef}
-              type="button"
-              className="icon-button drag-handle"
-              {...attributes}
-              {...listeners}
-              aria-label={`Drag stage ${stage.name}`}
-            >
-              ⠿
-            </button>
             <h2 className="stage-title">
               {stage.name} <span className="count">{tasks.length}</span>
             </h2>
             <div className="stage-actions">
+              <button
+                ref={setActivatorNodeRef}
+                type="button"
+                className="icon-button drag-handle"
+                {...attributes}
+                {...listeners}
+                aria-label={`Drag stage ${stage.name}`}
+              >
+                <GripIcon />
+              </button>
               <button
                 type="button"
                 className="icon-button"
@@ -114,7 +121,7 @@ export default function Stage({
                 disabled={!canMoveLeft}
                 onClick={() => onMove(-1)}
               >
-                ←
+                <ArrowLeftIcon />
               </button>
               <button
                 type="button"
@@ -123,7 +130,7 @@ export default function Stage({
                 disabled={!canMoveRight}
                 onClick={() => onMove(1)}
               >
-                →
+                <ArrowRightIcon />
               </button>
               <button
                 type="button"
@@ -131,7 +138,7 @@ export default function Stage({
                 aria-label={`Rename stage ${stage.name}`}
                 onClick={() => setRenaming(true)}
               >
-                ✎
+                <PencilIcon />
               </button>
               <button
                 type="button"
@@ -139,7 +146,7 @@ export default function Stage({
                 aria-label={`Delete stage ${stage.name}`}
                 onClick={() => setConfirmingDelete(true)}
               >
-                🗑
+                <TrashIcon />
               </button>
             </div>
           </>
@@ -160,6 +167,7 @@ export default function Stage({
             </li>
           ))}
         </ol>
+        {tasks.length === 0 && <p className="stage-empty">No tasks yet</p>}
       </SortableContext>
       <AddTaskForm boardId={boardId} stage={stage} />
       {openTask && (

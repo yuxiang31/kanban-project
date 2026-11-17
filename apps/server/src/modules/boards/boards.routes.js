@@ -4,6 +4,7 @@
 
 import {CLOSE_BOARD_DELETED} from '../../plugins/realtime.js';
 import {publish} from '../../utils/events.js';
+import {colorSchema} from '../../utils/palette.js';
 import {idParams, nonBlank} from '../../utils/schemas.js';
 import {findUserById} from '../users/users.repository.js';
 import {
@@ -11,19 +12,25 @@ import {
   deleteBoard,
   getBoard,
   listBoards,
-  renameBoard,
+  updateBoard,
 } from './boards.service.js';
 
-const nameBody = {
+const createBody = {
   type: 'object',
   required: ['name'],
   additionalProperties: false,
-  properties: {name: nonBlank(100)},
+  properties: {
+    name: nonBlank(100),
+    teamId: {type: 'integer', minimum: 1},
+    color: colorSchema,
+  },
 };
 
-const createBody = {
-  ...nameBody,
-  properties: {...nameBody.properties, teamId: {type: 'integer', minimum: 1}},
+const updateBody = {
+  type: 'object',
+  minProperties: 1,
+  additionalProperties: false,
+  properties: {name: nonBlank(100), color: colorSchema},
 };
 
 export default async function boardRoutes(app) {
@@ -48,9 +55,9 @@ export default async function boardRoutes(app) {
 
   app.patch(
     '/boards/:boardId',
-    {schema: {params: idParams('boardId'), body: nameBody}},
+    {schema: {params: idParams('boardId'), body: updateBody}},
     async (request) => {
-      const board = renameBoard(
+      const board = updateBoard(
         app.db,
         request.params.boardId,
         request.body,

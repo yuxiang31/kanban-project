@@ -3,6 +3,7 @@
  */
 
 import {publish} from '../../utils/events.js';
+import {colorSchema} from '../../utils/palette.js';
 import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
 import {
   createTask,
@@ -29,6 +30,7 @@ export default async function taskRoutes(app) {
             stageId: {type: 'integer'},
             title: nonBlank(200),
             description,
+            color: colorSchema,
           },
         },
       },
@@ -57,6 +59,7 @@ export default async function taskRoutes(app) {
           properties: {
             title: nonBlank(200),
             description,
+            color: colorSchema,
             stageId: {type: 'integer'},
             prevId: neighbourId,
             nextId: neighbourId,

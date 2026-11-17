@@ -1,0 +1,261 @@
+{
+  "notes": [
+    {
+      "file": "login-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "file": "boards-empty-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "boards-loading-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "boards-error-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "file": "boards-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [],
+      "h1Font": "\"Source Serif 4 Variable\", \"Source Serif 4\", Georgia, ui-serif, serif",
+      "h1Weight": "400",
+      "h1Size": "26px",
+      "cardFont": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "cardRadius": "16px",
+      "cardShadow": true,
+      "stageRadius": "24px",
+      "stageShadow": "none",
+      "fontsLoaded": [
+        "Inter Variable 100 900",
+        "Source Serif 4 Variable 200 900"
+      ]
+    },
+    {
+      "file": "board-filtered-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "task-dialog-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "confirm-delete-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-not-found-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "file": "teams-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "team-owner-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "team-member-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-dark-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "dragging-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [],
+      "overlayBackground": "rgb(251, 225, 209)",
+      "overlayColor": "rgb(93, 42, 26)"
+    },
+    {
+      "file": "keyboard-focus-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": [],
+      "focused": "Open task Write the launch announcement, assigned to Alice Martin",
+      "outline": "solid 2px"
+    },
+    {
+      "file": "login-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ]
+    },
+    {
+      "file": "boards-empty-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "boards-loading-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "boards-error-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ]
+    },
+    {
+      "file": "boards-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [],
+      "h1Font": "\"Source Serif 4 Variable\", \"Source Serif 4\", Georgia, ui-serif, serif",
+      "h1Weight": "400",
+      "h1Size": "30px",
+      "cardFont": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "cardRadius": "16px",
+      "cardShadow": true,
+      "stageRadius": "24px",
+      "stageShadow": "none",
+      "fontsLoaded": [
+        "Inter Variable 100 900",
+        "Source Serif 4 Variable 200 900"
+      ]
+    },
+    {
+      "file": "board-filtered-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "task-dialog-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "confirm-delete-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-not-found-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "file": "teams-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "team-owner-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "team-member-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "board-dark-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "dragging-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [],
+      "overlayBackground": "rgb(251, 225, 209)",
+      "overlayColor": "rgb(93, 42, 26)"
+    },
+    {
+      "file": "keyboard-focus-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [],
+      "focused": "Open task Write the launch announcement, assigned to Alice Martin",
+      "outline": "solid 2px"
+    },
+    {
+      "file": "deleted-notice-mobile.png",
+      "viewport": "390x844",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "deleted-notice-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": []
+    },
+    {
+      "file": "reduced-motion-desktop.png",
+      "viewport": "1440x900",
+      "overflow": 0,
+      "errors": [],
+      "cardTransition": "0s",
+      "skeletonAnimation": "none"
+    }
+  ],
+  "targetsUnder24px": ["Platform 51x16"]
+}

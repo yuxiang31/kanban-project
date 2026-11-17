@@ -1,6 +1,8 @@
 import {useState} from 'react';
 import {Link, useLocation, useNavigate} from 'react-router';
-import ErrorMessage from '../../components/ErrorMessage.jsx';
+import {CloseIcon, PlusIcon} from '../../components/Icons.jsx';
+import LoadError from '../../components/LoadError.jsx';
+import Skeleton from '../../components/Skeleton.jsx';
 import {useBoards} from './boardQueries.js';
 import {groupBoardsByTeam, pluralize} from './boardModel.js';
 import CreateBoardDialog from './CreateBoardDialog.jsx';
@@ -10,7 +12,8 @@ export default function BoardListPage() {
   const [creating, setCreating] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  // Set when a board was left involuntarily (deleted, access lost).
+  // Set after leaving a board: you deleted it, someone else did, or access
+  // was lost.
   const notice = location.state?.notice;
 
   return (
@@ -22,6 +25,7 @@ export default function BoardListPage() {
           className="button primary"
           onClick={() => setCreating(true)}
         >
+          <PlusIcon />
           New board
         </button>
       </div>
@@ -34,14 +38,25 @@ export default function BoardListPage() {
             aria-label="Dismiss"
             onClick={() => navigate('.', {replace: true, state: null})}
           >
-            ×
+            <CloseIcon />
           </button>
         </div>
       )}
-      {boards.isPending && <p role="status">Loading boards…</p>}
-      <ErrorMessage error={boards.error} />
+      {boards.isPending && <Skeleton label="Loading boards…" />}
+      <LoadError error={boards.error} onRetry={() => boards.refetch()} />
       {boards.data?.length === 0 && (
-        <p className="empty-state">No boards yet. Create one to get started.</p>
+        <div className="empty-state">
+          <p>
+            No boards yet. A board holds the stages your work moves through.
+          </p>
+          <button
+            type="button"
+            className="button"
+            onClick={() => setCreating(true)}
+          >
+            Create your first board
+          </button>
+        </div>
       )}
       {boards.data?.length > 0 &&
         groupBoardsByTeam(boards.data).map((section) => (
@@ -56,7 +71,11 @@ export default function BoardListPage() {
             <ul className="board-grid">
               {section.boards.map((board) => (
                 <li key={board.id}>
-                  <Link to={`/boards/${board.id}`} className="board-card">
+                  <Link
+                    to={`/boards/${board.id}`}
+                    className="board-card"
+                    data-color={board.color ?? undefined}
+                  >
                     <span className="board-card-name">{board.name}</span>
                     <span className="muted small">
                       {pluralize(board.taskCount, 'task')}

@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import * as api from '../../api/boards.js';
+import {PlusIcon} from '../../components/Icons.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 
@@ -15,7 +16,8 @@ export default function AddStageForm({boardId}) {
         className="add-stage-button"
         onClick={() => setOpen(true)}
       >
-        + Add stage
+        <PlusIcon />
+        Add stage
       </button>
     );
   }

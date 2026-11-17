@@ -72,7 +72,11 @@ describe('team ownership migrations (002 then 003)', () => {
       INSERT INTO teams (id, name, owner_id) VALUES (1, 'Core', 1);
       INSERT INTO team_members (team_id, user_id) VALUES (1, 1), (1, 2);
     `);
-    expect(migrate(db)).toEqual(['002_team_roles.sql', '003_single_owner.sql']);
+    // Later migrations may follow; these two must run, in this order.
+    expect(migrate(db).slice(0, 2)).toEqual([
+      '002_team_roles.sql',
+      '003_single_owner.sql',
+    ]);
     expect(ownerOf(db, 1)).toBe(1);
     expect(teamColumns(db)).toContain('owner_id');
     expect(teamColumns(db)).not.toContain('created_by');
@@ -92,7 +96,7 @@ describe('team ownership migrations (002 then 003)', () => {
         (2, 2, 'member', '2026-01-02'),
         (3, 2, 'member', '2026-01-02'), (3, 3, 'owner', '2026-01-03');
     `);
-    expect(migrate(db)).toEqual(['003_single_owner.sql']);
+    expect(migrate(db)[0]).toBe('003_single_owner.sql');
     expect(ownerOf(db, 1)).toBe(1);
     expect(ownerOf(db, 2)).toBe(3);
     expect(ownerOf(db, 3)).toBe(3);

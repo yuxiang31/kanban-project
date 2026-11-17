@@ -76,12 +76,13 @@ export function createFakeApi({me = users.alice} = {}) {
   function seedBoard(
     name,
     stageNames = ['To Do', 'In Progress', 'Done'],
-    {teamId = null} = {},
+    {teamId = null, color = null} = {},
   ) {
     const board = {
       id: id(),
       name,
       teamId,
+      color,
       team: teamSummary(teamId),
       createdBy: 1,
       createdAt: '2026-11-17 10:00:00',
@@ -111,6 +112,7 @@ export function createFakeApi({me = users.alice} = {}) {
       description,
       position: last + STEP,
       assigneeIds: [],
+      color: null,
     };
     state.tasks.push(task);
     return task;
@@ -140,7 +142,10 @@ export function createFakeApi({me = users.alice} = {}) {
       (_m, body) => ({
         status: 201,
         body: {
-          board: seedBoard(body.name, undefined, {teamId: body.teamId ?? null}),
+          board: seedBoard(body.name, undefined, {
+            teamId: body.teamId ?? null,
+            color: body.color ?? null,
+          }),
         },
       }),
     ],
@@ -233,7 +238,7 @@ export function createFakeApi({me = users.alice} = {}) {
       /^\/api\/boards\/(\d+)$/,
       ([boardId], body) => {
         const board = state.boards.find((b) => b.id === boardId);
-        board.name = body.name;
+        Object.assign(board, body);
         return {body: {board}};
       },
     ],

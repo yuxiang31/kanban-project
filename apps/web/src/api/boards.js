@@ -66,3 +66,11 @@ export const setAssignees = async (taskId, userIds) =>
       body: {userIds},
     })
   ).task;
+
+/**
+ * Renames a board and/or changes its colour (null clears it).
+ * @param {number} boardId
+ * @param {{name?: string, color?: ?string}} input
+ */
+export const updateBoard = async (boardId, input) =>
+  (await apiFetch(`/boards/${boardId}`, {method: 'PATCH', body: input})).board;
