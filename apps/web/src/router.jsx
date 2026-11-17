@@ -1,18 +1,13 @@
 /**
- * @fileoverview Route table. Feature routes are added phase by phase.
+ * @fileoverview Route table.
  */
 
 import {Link} from 'react-router';
-
-/** Placeholder home page until boards land in Phase 2. */
-function HomePage() {
-  return (
-    <main className="page">
-      <h1>Kanban</h1>
-      <p>Track your work on boards, alone or with your team.</p>
-    </main>
-  );
-}
+import AppLayout from './components/AppLayout.jsx';
+import {GuestOnlyRoute, ProtectedRoute} from './components/ProtectedRoute.jsx';
+import LoginPage from './features/auth/LoginPage.jsx';
+import RegisterPage from './features/auth/RegisterPage.jsx';
+import BoardListPage from './features/boards/BoardListPage.jsx';
 
 function NotFoundPage() {
   return (
@@ -24,6 +19,21 @@ function NotFoundPage() {
 }
 
 export const routes = [
-  {path: '/', element: <HomePage />},
+  {
+    element: <GuestOnlyRoute />,
+    children: [
+      {path: '/login', element: <LoginPage />},
+      {path: '/register', element: <RegisterPage />},
+    ],
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [{path: '/', element: <BoardListPage />}],
+      },
+    ],
+  },
   {path: '*', element: <NotFoundPage />},
 ];

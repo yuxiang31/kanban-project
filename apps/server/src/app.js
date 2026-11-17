@@ -8,12 +8,19 @@ import path from 'node:path';
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import dbPlugin from './plugins/db.js';
+import authPlugin from './plugins/auth.js';
+import authRoutes from './modules/auth/auth.routes.js';
+
+const DEFAULT_BCRYPT_ROUNDS = 12;
+const DEFAULT_AUTH_RATE_LIMIT = {max: 20, timeWindow: 60_000};
 
 /**
  * @param {{
  *   dbPath: string,
  *   jwtSecret: string,
  *   cookieSecure?: boolean,
+ *   bcryptRounds?: number,
+ *   authRateLimit?: {max: number, timeWindow: number},
  *   webDistDir?: ?string,
  *   logger?: (boolean|!Object),
  * }} opts
@@ -36,10 +43,19 @@ export async function buildApp(opts) {
   });
 
   await app.register(dbPlugin, {dbPath: opts.dbPath});
+  await app.register(authPlugin, {
+    jwtSecret: opts.jwtSecret,
+    cookieSecure: opts.cookieSecure ?? false,
+  });
 
   await app.register(
     async (api) => {
       api.get('/health', async () => ({ok: true}));
+      await api.register(authRoutes, {
+        prefix: '/auth',
+        bcryptRounds: opts.bcryptRounds ?? DEFAULT_BCRYPT_ROUNDS,
+        rateLimit: opts.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT,
+      });
     },
     {prefix: '/api'},
   );

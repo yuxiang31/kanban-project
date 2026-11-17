@@ -1,5 +1,5 @@
 /**
- * @fileoverview Root component: query client + router.
+ * @fileoverview Root component: query client, auth and router.
  */
 
 import {useState} from 'react';
@@ -9,6 +9,7 @@ import {
   createMemoryRouter,
   RouterProvider,
 } from 'react-router';
+import {AuthProvider} from './context/AuthContext.jsx';
 import {routes} from './router.jsx';
 
 /**
@@ -29,7 +30,9 @@ export function AppProviders({initialEntries}) {
   );
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
