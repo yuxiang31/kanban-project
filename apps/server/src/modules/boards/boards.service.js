@@ -6,6 +6,7 @@
 import {badRequest} from '../../utils/errors.js';
 import {nextPosition} from '../../utils/position.js';
 import {insertStage, listStages} from '../stages/stages.repository.js';
+import {listItemsForBoard} from '../tasks/checklist.repository.js';
 import {listTasks} from '../tasks/tasks.repository.js';
 import {assertTeamMember} from '../teams/teams.service.js';
 import {toPublicUser} from '../users/users.repository.js';
@@ -69,13 +70,17 @@ export function fullBoard(db, board, userId) {
     }
     assignees.get(taskId).push(assigneeId);
   }
+  const checklists = Map.groupBy(
+    listItemsForBoard(db, board.id),
+    (item) => item.task_id,
+  );
   return {
     ...toBoardSummary(board),
     canDelete: canDeleteBoard(board, userId),
     members: repo.listAssignableUsers(db, board).map(toPublicUser),
     stages: listStages(db, board.id).map(toStage),
     tasks: listTasks(db, board.id).map((row) =>
-      toTask(row, assignees.get(row.id) ?? []),
+      toTask(row, assignees.get(row.id) ?? [], checklists.get(row.id) ?? []),
     ),
   };
 }

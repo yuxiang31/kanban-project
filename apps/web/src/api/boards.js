@@ -55,6 +55,28 @@ export const deleteTask = (taskId) =>
   apiFetch(`/tasks/${taskId}`, {method: 'DELETE'});
 
 /**
+ * Adds a to-do at the end of a task's checklist.
+ * @param {number} taskId
+ * @param {string} text
+ * @return {!Promise<{item: !Object, task: !Object}>}
+ */
+export const addChecklistItem = (taskId, text) =>
+  apiFetch(`/tasks/${taskId}/checklist`, {method: 'POST', body: {text}});
+
+/**
+ * Ticks/unticks and/or renames a checklist item.
+ * @param {number} itemId
+ * @param {{text?: string, done?: boolean}} input
+ * @return {!Promise<{item: !Object, task: !Object}>}
+ */
+export const updateChecklistItem = (itemId, input) =>
+  apiFetch(`/checklist/${itemId}`, {method: 'PATCH', body: input});
+
+/** @param {number} itemId */
+export const deleteChecklistItem = (itemId) =>
+  apiFetch(`/checklist/${itemId}`, {method: 'DELETE'});
+
+/**
  * Sets who handles a task (replaces the previous set).
  * @param {number} taskId
  * @param {!Array<number>} userIds

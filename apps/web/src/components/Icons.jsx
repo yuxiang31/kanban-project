@@ -107,3 +107,16 @@ export const PeopleIcon = () => (
     <path d="M12.6 4.6a2.6 2.6 0 010 4.8M14.6 11.6a4.7 4.7 0 012.6 4.4" />
   </Icon>
 );
+
+export const ChevronIcon = () => (
+  <Icon>
+    <path d="M7.5 5l5 5-5 5" />
+  </Icon>
+);
+
+export const ChecklistIcon = () => (
+  <Icon>
+    <rect x="3.5" y="3.5" width="13" height="13" rx="3" />
+    <path d="M7 10.2l2 2 4-4.4" />
+  </Icon>
+);

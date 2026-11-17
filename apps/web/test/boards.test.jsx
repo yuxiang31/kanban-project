@@ -134,7 +134,7 @@ describe('board page', () => {
     expect(screen.getByRole('link', {name: /back to boards/i})).toBeVisible();
   });
 
-  it('adds a task to a stage and keeps the form open', async () => {
+  it('adds a task to a stage, then closes the form', async () => {
     const user = await openBoard();
     await user.click(
       within(stage('Done')).getByRole('button', {name: /add task/i}),
@@ -142,10 +142,21 @@ describe('board page', () => {
     const input = within(stage('Done')).getByLabelText(/task title/i);
     await user.type(input, 'Ship it{Enter}');
     await waitFor(() => expect(taskTitles('Done')).toEqual(['Ship it']));
-    expect(input).toHaveValue('');
-    expect(input).toHaveFocus();
-    await user.keyboard('{Escape}');
+    // The new task opens for its details (see taskFlow.test.jsx).
     expect(within(stage('Done')).queryByLabelText(/task title/i)).toBeNull();
+  });
+
+  it('closes the add form with Escape without adding', async () => {
+    const user = await openBoard();
+    await user.click(
+      within(stage('Done')).getByRole('button', {name: /add task/i}),
+    );
+    await user.type(
+      within(stage('Done')).getByLabelText(/task title/i),
+      'Never mind{Escape}',
+    );
+    expect(within(stage('Done')).queryByLabelText(/task title/i)).toBeNull();
+    expect(taskTitles('Done')).toEqual([]);
   });
 
   it('shows an error when adding a task fails', async () => {

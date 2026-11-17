@@ -30,11 +30,17 @@ export function toStage(row) {
   };
 }
 
+/** @param {!Object} row A task_checklist_items row. */
+export function toChecklistItem(row) {
+  return {id: row.id, text: row.text, done: row.done === 1};
+}
+
 /**
  * @param {!Object} row
  * @param {!Array<number>=} assigneeIds
+ * @param {!Array<!Object>=} checklist task_checklist_items rows, in order.
  */
-export function toTask(row, assigneeIds = []) {
+export function toTask(row, assigneeIds = [], checklist = []) {
   return {
     id: row.id,
     boardId: row.board_id,
@@ -47,5 +53,6 @@ export function toTask(row, assigneeIds = []) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     assigneeIds,
+    checklist: checklist.map(toChecklistItem),
   };
 }

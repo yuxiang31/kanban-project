@@ -758,12 +758,12 @@ h1 {
   color: var(--muted);
 }
 
-/* D3: task cards are the only floating objects on the board. */
+/* D3: task cards are the only floating objects on the board. The card
+   holds the open/drag area (.task-card-body) and, below it, the checklist
+   drop-down (D19). The drag overlay is a plain .task-card. */
 .task-card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  display: grid;
+  gap: 6px;
   padding: 12px 14px;
   border-radius: var(--radius-small-card);
   background: var(--paper);
@@ -771,9 +771,21 @@ h1 {
   font-weight: 450;
   line-height: 1.35;
   overflow-wrap: anywhere;
+  transition: box-shadow 160ms var(--ease);
+}
+
+.task-card-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 8px;
   cursor: pointer;
   touch-action: manipulation;
-  transition: box-shadow 160ms var(--ease);
+}
+
+.task-card-body:focus-visible {
+  outline-offset: 4px;
 }
 
 .task-card:hover {
@@ -1536,7 +1548,7 @@ h1 {
 }
 
 /* Paused controls look paused; the card stays readable. */
-.task-card[aria-disabled="true"] {
+.task-card-body[aria-disabled="true"] {
   cursor: default;
 }
 
@@ -1550,6 +1562,204 @@ h1 {
 .add-stage-button:disabled:hover {
   background: transparent;
   color: var(--muted);
+}
+
+/* ---- New task notice and card checklist (D19) ---- */
+
+/* Shown at the top of the task dialog right after the task is added. */
+.task-added {
+  padding: 10px 14px;
+  border-radius: var(--radius-input);
+  background: var(--mist);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.card-checklist {
+  display: grid;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+}
+
+.checklist-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checklist-toggle:hover {
+  color: var(--ink);
+}
+
+.checklist-toggle .icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.checklist-toggle .icon:first-child {
+  transition: transform 160ms var(--ease);
+}
+
+.checklist-toggle[aria-expanded="true"] .icon:first-child {
+  transform: rotate(90deg);
+}
+
+.checklist-count[data-complete] {
+  color: var(--live);
+}
+
+.checklist-bar {
+  flex: 1;
+  max-width: 120px;
+  height: 4px;
+  margin-left: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+
+.checklist-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--live);
+  transition: width 200ms var(--ease);
+}
+
+.checklist-panel {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+.checklist-items {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist-items li {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 32px;
+}
+
+.checklist-item {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 430;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.checklist-item input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--ink);
+}
+
+.checklist-item span {
+  overflow-wrap: anywhere;
+}
+
+.checklist-items li.is-done .checklist-item span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.checklist-items .icon-button {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.checklist-items .icon-button:hover:not(:disabled) {
+  background: var(--mist);
+}
+
+.checklist-items .icon-button .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.card-checklist input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  background: var(--paper);
+  font-size: 13px;
+}
+
+.card-checklist input:disabled,
+.checklist-item:has(input:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.checklist-add {
+  display: flex;
+  gap: 6px;
+}
+
+.checklist-add .button {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+/* Edit/delete appear on hover or focus where hovering is possible. */
+@media (hover: hover) {
+  .checklist-items .icon-button {
+    opacity: 0;
+  }
+
+  .checklist-items li:hover .icon-button,
+  .checklist-items li:focus-within .icon-button {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .checklist-toggle {
+    min-height: 36px;
+  }
+
+  .checklist-items li {
+    min-height: 40px;
+  }
+
+  .checklist-items .icon-button {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* ---- Landing page (D18) ----

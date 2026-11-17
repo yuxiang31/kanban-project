@@ -1,20 +1,22 @@
 /**
- * @fileoverview Quick-add for tasks at the bottom of a stage. Stays open
- * after each add so several tasks can be typed in a row; while open, it
- * holds the board's one-change-at-a-time lock.
+ * @fileoverview Quick-add for tasks at the bottom of a stage: type a title
+ * and the new task opens (via `onCreated`) for its details. While open, the
+ * form holds the board's one-change-at-a-time lock.
  */
 
-import {useId, useRef, useState} from 'react';
+import {useId, useState} from 'react';
 import * as api from '../../api/boards.js';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import {PlusIcon} from '../../components/Icons.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 import {OPERATION_HINT, useBoardOperation} from '../boards/boardOperation.js';
 
-/** @param {{boardId: number, stage: !Object}} props */
-export default function AddTaskForm({boardId, stage}) {
+/**
+ * @param {{boardId: number, stage: !Object,
+ *     onCreated: function(!Object)}} props `onCreated` gets the new task.
+ */
+export default function AddTaskForm({boardId, stage, onCreated}) {
   const inputId = useId();
-  const inputRef = useRef(null);
   const op = useBoardOperation(`add-task:${stage.id}`);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -32,9 +34,13 @@ export default function AddTaskForm({boardId, stage}) {
       return;
     }
     try {
-      await create.mutateAsync({stageId: stage.id, title: trimmed});
+      const task = await create.mutateAsync({
+        stageId: stage.id,
+        title: trimmed,
+      });
       setTitle('');
-      inputRef.current?.focus();
+      close();
+      onCreated(task);
     } catch {
       // Shown via create.error.
     }
@@ -62,7 +68,6 @@ export default function AddTaskForm({boardId, stage}) {
       </label>
       <input
         id={inputId}
-        ref={inputRef}
         value={title}
         maxLength={200}
         placeholder="Task title"
@@ -84,7 +89,7 @@ export default function AddTaskForm({boardId, stage}) {
           Add
         </button>
         <button type="button" className="button" onClick={() => close()}>
-          Done
+          Cancel
         </button>
       </div>
     </form>

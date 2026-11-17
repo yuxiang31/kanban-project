@@ -13,6 +13,7 @@ const STEP = 1024;
  *   seedBoard: function(string, !Array<string>=, !Object=): !Object,
  *   seedTeam: function(string, !Object=): !Object,
  *   addTask: function(number, string, string=): !Object,
+ *   addItem: function(number, string, boolean=): !Object,
  *   failNext: function(string, number, string): void,
  * }}
  */
@@ -115,10 +116,22 @@ export function createFakeApi({me = users.alice} = {}) {
       position: last + STEP,
       assigneeIds: [],
       color: null,
+      checklist: [],
     };
     state.tasks.push(task);
     return task;
   }
+
+  /** Adds a to-do to a task's checklist. */
+  function addItem(taskId, text, done = false) {
+    const task = state.tasks.find((t) => t.id === taskId);
+    const item = {id: id(), text, done};
+    task.checklist = [...task.checklist, item];
+    return item;
+  }
+
+  const taskOfItem = (itemId) =>
+    state.tasks.find((t) => t.checklist.some((i) => i.id === itemId));
 
   /** Makes the next `METHOD /path-prefix` request fail. */
   function failNext(key, status, message) {
@@ -333,6 +346,39 @@ export function createFakeApi({me = users.alice} = {}) {
       },
     ],
     [
+      'POST',
+      /^\/api\/tasks\/(\d+)\/checklist$/,
+      ([taskId], body) => {
+        const item = addItem(taskId, body.text.trim());
+        const task = state.tasks.find((t) => t.id === taskId);
+        return {status: 201, body: {item, task}};
+      },
+    ],
+    [
+      'PATCH',
+      /^\/api\/checklist\/(\d+)$/,
+      ([itemId], body) => {
+        const task = taskOfItem(itemId);
+        if (!task) {
+          return notFound;
+        }
+        task.checklist = task.checklist.map((i) =>
+          i.id === itemId ? {...i, ...body} : i,
+        );
+        const item = task.checklist.find((i) => i.id === itemId);
+        return {body: {item, task}};
+      },
+    ],
+    [
+      'DELETE',
+      /^\/api\/checklist\/(\d+)$/,
+      ([itemId]) => {
+        const task = taskOfItem(itemId);
+        task.checklist = task.checklist.filter((i) => i.id !== itemId);
+        return {status: 204};
+      },
+    ],
+    [
       'DELETE',
       /^\/api\/tasks\/(\d+)$/,
       ([taskId]) => {
@@ -358,5 +404,5 @@ export function createFakeApi({me = users.alice} = {}) {
     return undefined;
   }
 
-  return {state, handle, seedBoard, seedTeam, addTask, failNext};
+  return {state, handle, seedBoard, seedTeam, addTask, addItem, failNext};
 }

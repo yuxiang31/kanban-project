@@ -61,11 +61,14 @@ describe('one change at a time', () => {
       screen.getByText('Finish or cancel the current change first.'),
     ).toBeVisible();
 
-    // The open form itself still works, and closing it releases the lock.
+    // The open form itself still works; adding closes it (opening the new
+    // task) and releases the lock.
     await user.type(
       within(stage('In Progress')).getByLabelText(/task title/i),
       'Build it{Enter}',
     );
+    await screen.findByRole('dialog', {name: /edit task/i});
+    await user.keyboard('{Escape}');
     await waitFor(() =>
       expect(
         within(stage('In Progress')).getByRole('button', {
@@ -73,7 +76,6 @@ describe('one change at a time', () => {
         }),
       ).toBeVisible(),
     );
-    await user.keyboard('{Escape}');
     for (const control of otherChanges()) {
       expect(control).toBeEnabled();
     }

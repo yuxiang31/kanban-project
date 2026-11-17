@@ -1,7 +1,8 @@
 /**
- * @fileoverview A draggable task card. Click or Enter opens it; Space picks
- * it up for a keyboard move (arrows to move, Space to drop, Escape to
- * cancel).
+ * @fileoverview A draggable task card. Its main area opens the task on
+ * click or Enter, and Space picks it up for a keyboard move (arrows to
+ * move, Space to drop, Escape to cancel). Below it, the optional checklist
+ * drops down on the card itself.
  */
 
 import {useSortable} from '@dnd-kit/sortable';
@@ -10,6 +11,7 @@ import {AvatarStack} from '../../components/Avatar.jsx';
 import {listNames} from '../../utils/people.js';
 import {useBoardOperation} from '../boards/boardOperation.js';
 import {taskDndId} from '../boards/dnd.js';
+import Checklist from './Checklist.jsx';
 
 /**
  * @param {{task: !Object, assignees: !Array<!Object>, onOpen: function()}}
@@ -19,12 +21,19 @@ export default function TaskCard({task, assignees, onOpen}) {
   // While another change is open on the board, the card can't be opened
   // or dragged.
   const {locked} = useBoardOperation();
-  const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
-    useSortable({
-      id: taskDndId(task.id),
-      data: {type: 'task'},
-      disabled: locked,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: taskDndId(task.id),
+    data: {type: 'task'},
+    disabled: locked,
+  });
 
   function open() {
     if (!locked) {
@@ -59,18 +68,24 @@ export default function TaskCard({task, assignees, onOpen}) {
       style={{transform: CSS.Translate.toString(transform), transition}}
       className={`task-card${isDragging ? ' is-dragging' : ''}`}
       data-color={task.color ?? undefined}
-      {...attributes}
-      {...listeners}
-      aria-label={label}
-      aria-disabled={locked || undefined}
-      onClick={open}
-      onKeyDown={handleKeyDown}
     >
-      <span className="task-main">
-        <span className="task-title">{task.title}</span>
-        {preview && <span className="task-desc">{preview}</span>}
-      </span>
-      <AvatarStack users={assignees} />
+      <div
+        ref={setActivatorNodeRef}
+        className="task-card-body"
+        {...attributes}
+        {...listeners}
+        aria-label={label}
+        aria-disabled={locked || undefined}
+        onClick={open}
+        onKeyDown={handleKeyDown}
+      >
+        <span className="task-main">
+          <span className="task-title">{task.title}</span>
+          {preview && <span className="task-desc">{preview}</span>}
+        </span>
+        <AvatarStack users={assignees} />
+      </div>
+      <Checklist task={task} disabled={locked} />
     </div>
   );
 }

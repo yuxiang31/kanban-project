@@ -58,6 +58,9 @@ export default function Stage({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [choosingColor, setChoosingColor] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+  // A task just added here: shown until the board refetch includes it (or
+  // for good, if the person filter hides it).
+  const [addedTask, setAddedTask] = useState(null);
   const renameOp = useBoardOperation(`rename-stage:${stage.id}`);
   const {locked} = renameOp;
   const rename = useBoardMutation((name) => api.updateStage(stage.id, {name}));
@@ -65,7 +68,9 @@ export default function Stage({
     api.updateStage(stage.id, {color}),
   );
   const remove = useBoardMutation(() => api.deleteStage(stage.id));
-  const openTask = tasks.find((task) => task.id === openTaskId);
+  const openTask =
+    tasks.find((task) => task.id === openTaskId) ??
+    (addedTask?.id === openTaskId ? addedTask : undefined);
   const memberById = new Map(members.map((m) => [m.id, m]));
   /** Assignees still on the board, in the board's member order. */
   const membersFor = (task) =>
@@ -202,19 +207,34 @@ export default function Stage({
               <TaskCard
                 task={task}
                 assignees={membersFor(task)}
-                onOpen={() => setOpenTaskId(task.id)}
+                onOpen={() => {
+                  setAddedTask(null);
+                  setOpenTaskId(task.id);
+                }}
               />
             </li>
           ))}
         </ol>
         {tasks.length === 0 && <p className="stage-empty">No tasks yet</p>}
       </SortableContext>
-      <AddTaskForm boardId={boardId} stage={stage} />
+      <AddTaskForm
+        boardId={boardId}
+        stage={stage}
+        onCreated={(task) => {
+          setAddedTask(task);
+          setOpenTaskId(task.id);
+        }}
+      />
       {openTask && (
         <TaskDialog
+          key={openTask.id}
           task={openTask}
           members={members}
-          onClose={() => setOpenTaskId(null)}
+          addedTo={addedTask?.id === openTask.id ? stage.name : undefined}
+          onClose={() => {
+            setOpenTaskId(null);
+            setAddedTask(null);
+          }}
         />
       )}
       {choosingColor && (

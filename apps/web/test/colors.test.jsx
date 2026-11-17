@@ -62,7 +62,7 @@ describe('task colours', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(lastBody('PATCH', `/tasks/${task.id}`).color).toBe('sky');
     const card = screen.getByRole('button', {name: /open task write spec/i});
-    expect(card).toHaveAttribute('data-color', 'sky');
+    expect(card.closest('.task-card')).toHaveAttribute('data-color', 'sky');
     expect(card).toHaveAccessibleName('Open task Write spec, colour sky');
   });
 
@@ -75,7 +75,9 @@ describe('task colours', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(lastBody('PATCH', `/tasks/${task.id}`).color).toBeNull();
     expect(
-      screen.getByRole('button', {name: /open task write spec/i}),
+      screen
+        .getByRole('button', {name: /open task write spec/i})
+        .closest('.task-card'),
     ).not.toHaveAttribute('data-color');
   });
 });

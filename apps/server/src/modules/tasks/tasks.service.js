@@ -6,11 +6,29 @@
 import {badRequest, notFound} from '../../utils/errors.js';
 import {nextPosition, positionFromNeighbours} from '../../utils/position.js';
 import {assertBoardAccess} from '../boards/boards.access.js';
-import {toTask} from '../boards/boards.mappers.js';
+import {toChecklistItem, toTask} from '../boards/boards.mappers.js';
 import {listAssignableUsers} from '../boards/boards.repository.js';
 import {findStage} from '../stages/stages.repository.js';
 import {findUserById} from '../users/users.repository.js';
+import * as checklistRepo from './checklist.repository.js';
 import * as repo from './tasks.repository.js';
+
+/** Most items one task's checklist can hold. */
+export const MAX_CHECKLIST_ITEMS = 100;
+
+/**
+ * The API shape of a task with its assignees and checklist.
+ * @param {!Object} db
+ * @param {!Object} row A tasks row.
+ * @return {!Object}
+ */
+function loadTask(db, row) {
+  return toTask(
+    row,
+    repo.listAssigneeIds(db, row.id),
+    checklistRepo.listItems(db, row.id),
+  );
+}
 
 /**
  * Loads a task the user may change; 404 if missing or not accessible.
@@ -116,7 +134,7 @@ export function updateTask(db, taskId, input, userId) {
       color: 'color' in input ? input.color : task.color,
     });
   })();
-  return toTask(row, repo.listAssigneeIds(db, task.id));
+  return loadTask(db, row);
 }
 
 /**
@@ -155,5 +173,75 @@ export function setAssignees(db, taskId, userIds, actorId) {
     }
   }
   db.transaction(() => repo.replaceAssignees(db, task.id, unique))();
-  return toTask(repo.findTask(db, task.id), repo.listAssigneeIds(db, task.id));
+  return loadTask(db, repo.findTask(db, task.id));
+}
+
+/**
+ * Loads a checklist item whose task the user may change; 404 otherwise.
+ * @param {!Object} db
+ * @param {number} itemId
+ * @param {number} userId
+ * @return {{item: !Object, task: !Object}} The rows.
+ */
+function assertItemAccess(db, itemId, userId) {
+  const item = checklistRepo.findItem(db, itemId);
+  if (!item) {
+    throw notFound('Checklist item not found.');
+  }
+  return {item, task: assertTaskAccess(db, item.task_id, userId)};
+}
+
+/**
+ * Adds an item at the end of a task's checklist.
+ * @param {!Object} db
+ * @param {number} taskId
+ * @param {string} text
+ * @param {number} userId
+ * @return {{item: !Object, task: !Object}}
+ */
+export function addChecklistItem(db, taskId, text, userId) {
+  const task = assertTaskAccess(db, taskId, userId);
+  const row = db.transaction(() => {
+    const {count, max} = checklistRepo.itemStats(db, task.id);
+    if (count >= MAX_CHECKLIST_ITEMS) {
+      throw badRequest(
+        `A checklist can have at most ${MAX_CHECKLIST_ITEMS} items.`,
+      );
+    }
+    return checklistRepo.insertItem(db, {
+      taskId: task.id,
+      text: text.trim(),
+      position: nextPosition(max),
+    });
+  })();
+  return {item: toChecklistItem(row), task: loadTask(db, task)};
+}
+
+/**
+ * Renames and/or ticks a checklist item.
+ * @param {!Object} db
+ * @param {number} itemId
+ * @param {{text?: string, done?: boolean}} input
+ * @param {number} userId
+ * @return {{item: !Object, task: !Object}}
+ */
+export function updateChecklistItem(db, itemId, input, userId) {
+  const {item, task} = assertItemAccess(db, itemId, userId);
+  const row = checklistRepo.updateItem(db, item.id, {
+    text: input.text?.trim() ?? item.text,
+    done: input.done ?? item.done === 1,
+  });
+  return {item: toChecklistItem(row), task: loadTask(db, task)};
+}
+
+/**
+ * @param {!Object} db
+ * @param {number} itemId
+ * @param {number} userId
+ * @return {!Object} The task, without the item.
+ */
+export function deleteChecklistItem(db, itemId, userId) {
+  const {item, task} = assertItemAccess(db, itemId, userId);
+  checklistRepo.deleteItem(db, item.id);
+  return loadTask(db, task);
 }

@@ -1,6 +1,7 @@
 /**
- * @fileoverview Edit a task's title, description and assignees, or
- * delete it.
+ * @fileoverview Edit a task's title, description, colour and assignees, or
+ * delete it. Also opens straight after a task is added, so its details can
+ * be filled in. (The checklist lives on the card: Checklist.jsx.)
  */
 
 import {useId, useState} from 'react';
@@ -13,10 +14,12 @@ import Modal from '../../components/Modal.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
 
 /**
- * @param {{task: !Object, members: !Array<!Object>, onClose: function()}}
- *     props `members` are the people who can be assigned on this board.
+ * @param {{task: !Object, members: !Array<!Object>, onClose: function(),
+ *     addedTo?: string}} props `members` are the people who can be
+ *     assigned on this board; `addedTo` names the stage when the task has
+ *     just been added.
  */
-export default function TaskDialog({task, members, onClose}) {
+export default function TaskDialog({task, members, onClose, addedTo}) {
   const assigneesId = useId();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -83,6 +86,12 @@ export default function TaskDialog({task, members, onClose}) {
   return (
     <Modal title="Edit task" onClose={onClose}>
       <form className="form" onSubmit={handleSubmit}>
+        {addedTo && (
+          <p className="task-added" role="status">
+            Added to {addedTo}. Add the details now, or close to keep just the
+            title.
+          </p>
+        )}
         <label>
           Title
           {/* A growing textarea so long titles wrap and stay fully visible;
