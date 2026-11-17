@@ -2,7 +2,7 @@
  * @fileoverview Shell for logged-in pages: header with user menu.
  */
 
-import {Link, Outlet, useNavigate} from 'react-router';
+import {Link, NavLink, Outlet, useNavigate} from 'react-router';
 import {useAuth} from '../hooks/useAuth.js';
 
 export default function AppLayout() {
@@ -17,9 +17,17 @@ export default function AppLayout() {
   return (
     <>
       <header className="app-header">
-        <Link to="/" className="brand">
-          Kanban
-        </Link>
+        <div className="header-left">
+          <Link to="/" className="brand">
+            Kanban
+          </Link>
+          <nav aria-label="Main" className="main-nav">
+            <NavLink to="/" end>
+              Boards
+            </NavLink>
+            <NavLink to="/teams">Teams</NavLink>
+          </nav>
+        </div>
         <div className="user-menu">
           <span className="user-name">{user.displayName}</span>
           <button type="button" className="button" onClick={handleLogout}>

@@ -18,6 +18,11 @@ const nameBody = {
   properties: {name: nonBlank(100)},
 };
 
+const createBody = {
+  ...nameBody,
+  properties: {...nameBody.properties, teamId: {type: 'integer', minimum: 1}},
+};
+
 export default async function boardRoutes(app) {
   app.addHook('preHandler', app.authenticate);
 
@@ -25,7 +30,7 @@ export default async function boardRoutes(app) {
     boards: listBoards(app.db, request.user.id),
   }));
 
-  app.post('/boards', {schema: {body: nameBody}}, async (request, reply) => {
+  app.post('/boards', {schema: {body: createBody}}, async (request, reply) => {
     const board = createBoard(app.db, request.body, request.user.id);
     return reply.status(201).send({board});
   });

@@ -10,13 +10,23 @@ const STEP = 1024;
  * @return {{
  *   state: !Object,
  *   handle: function(string, string, *): (!Object|undefined),
- *   seedBoard: function(string, !Array<string>=): !Object,
+ *   seedBoard: function(string, !Array<string>=, !Object=): !Object,
+ *   seedTeam: function(string, !Object=): !Object,
  *   addTask: function(number, string, string=): !Object,
  *   failNext: function(string, number, string): void,
  * }}
  */
-export function createFakeApi() {
-  const state = {boards: [], stages: [], tasks: [], nextId: 100};
+export const users = {
+  alice: {id: 1, username: 'alice', displayName: 'Alice'},
+  bob: {id: 2, username: 'bob', displayName: 'Bob'},
+  carol: {id: 3, username: 'carol', displayName: 'Carol'},
+};
+
+/**
+ * @param {{me?: !Object}=} options `me` is the logged-in user (alice).
+ */
+export function createFakeApi({me = users.alice} = {}) {
+  const state = {boards: [], stages: [], tasks: [], teams: [], nextId: 100};
   const failures = new Map();
   const id = () => state.nextId++;
   const byPosition = (a, b) => a.position - b.position;
@@ -27,17 +37,49 @@ export function createFakeApi() {
     state.tasks.filter((t) => t.boardId === boardId).sort(byPosition);
   const fullBoard = (board) => ({
     ...board,
-    canDelete: true,
+    canDelete: board.canDeleteOverride ?? true,
     stages: stagesOf(board.id),
     tasks: tasksOf(board.id),
   });
   const notFound = {status: 404, body: {message: 'Not found.'}};
 
-  function seedBoard(name, stageNames = ['To Do', 'In Progress', 'Done']) {
+  const teamSummary = (teamId) => {
+    const team = state.teams.find((t) => t.id === teamId);
+    return team ? {id: team.id, name: team.name} : null;
+  };
+
+  /**
+   * @param {string} name
+   * @param {{ownerId?: number, memberIds?: !Array<number>}=} options
+   */
+  function seedTeam(name, {ownerId = me.id, memberIds = []} = {}) {
+    const team = {id: id(), name, ownerId, memberIds: [ownerId, ...memberIds]};
+    state.teams.push(team);
+    return team;
+  }
+
+  const userById = (uid) => Object.values(users).find((u) => u.id === uid);
+  const teamDetail = (team) => ({
+    id: team.id,
+    name: team.name,
+    ownerId: team.ownerId,
+    isOwner: team.ownerId === me.id,
+    boardCount: state.boards.filter((b) => b.teamId === team.id).length,
+    members: team.memberIds.map(userById),
+  });
+  const myTeam = (teamId) =>
+    state.teams.find((t) => t.id === teamId && t.memberIds.includes(me.id));
+
+  function seedBoard(
+    name,
+    stageNames = ['To Do', 'In Progress', 'Done'],
+    {teamId = null} = {},
+  ) {
     const board = {
       id: id(),
       name,
-      teamId: null,
+      teamId,
+      team: teamSummary(teamId),
       createdBy: 1,
       createdAt: '2026-11-17 10:00:00',
     };
@@ -94,8 +136,86 @@ export function createFakeApi() {
       /^\/api\/boards$/,
       (_m, body) => ({
         status: 201,
-        body: {board: seedBoard(body.name)},
+        body: {
+          board: seedBoard(body.name, undefined, {teamId: body.teamId ?? null}),
+        },
       }),
+    ],
+    [
+      'GET',
+      /^\/api\/teams$/,
+      () => ({
+        body: {
+          teams: state.teams
+            .filter((t) => t.memberIds.includes(me.id))
+            .map((t) => ({
+              id: t.id,
+              name: t.name,
+              ownerId: t.ownerId,
+              isOwner: t.ownerId === me.id,
+              memberCount: t.memberIds.length,
+            })),
+        },
+      }),
+    ],
+    [
+      'POST',
+      /^\/api\/teams$/,
+      (_m, body) => ({
+        status: 201,
+        body: {team: teamDetail(seedTeam(body.name))},
+      }),
+    ],
+    [
+      'GET',
+      /^\/api\/teams\/(\d+)$/,
+      ([teamId]) => {
+        const team = myTeam(teamId);
+        return team ? {body: {team: teamDetail(team)}} : notFound;
+      },
+    ],
+    [
+      'PATCH',
+      /^\/api\/teams\/(\d+)$/,
+      ([teamId], body) => {
+        const team = myTeam(teamId);
+        team.name = body.name;
+        return {body: {team: teamDetail(team)}};
+      },
+    ],
+    [
+      'DELETE',
+      /^\/api\/teams\/(\d+)$/,
+      ([teamId]) => {
+        state.teams = state.teams.filter((t) => t.id !== teamId);
+        state.boards = state.boards.filter((b) => b.teamId !== teamId);
+        return {status: 204};
+      },
+    ],
+    [
+      'POST',
+      /^\/api\/teams\/(\d+)\/members$/,
+      ([teamId], body) => {
+        const team = myTeam(teamId);
+        const user = users[body.username.toLowerCase()];
+        if (!user) {
+          return {
+            status: 404,
+            body: {message: `No user named "${body.username}".`},
+          };
+        }
+        team.memberIds.push(user.id);
+        return {status: 201, body: {member: user}};
+      },
+    ],
+    [
+      'DELETE',
+      /^\/api\/teams\/(\d+)\/members\/(\d+)$/,
+      ([teamId, userId]) => {
+        const team = myTeam(teamId);
+        team.memberIds = team.memberIds.filter((m) => m !== userId);
+        return {status: 204};
+      },
     ],
     [
       'GET',
@@ -211,5 +331,5 @@ export function createFakeApi() {
     return undefined;
   }
 
-  return {state, handle, seedBoard, addTask, failNext};
+  return {state, handle, seedBoard, seedTeam, addTask, failNext};
 }

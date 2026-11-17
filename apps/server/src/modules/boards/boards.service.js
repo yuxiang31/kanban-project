@@ -6,7 +6,12 @@
 import {nextPosition} from '../../utils/position.js';
 import {insertStage, listStages} from '../stages/stages.repository.js';
 import {listTasks} from '../tasks/tasks.repository.js';
-import {assertBoardAccess, canDeleteBoard} from './boards.access.js';
+import {assertTeamMember} from '../teams/teams.service.js';
+import {
+  assertBoardAccess,
+  assertCanDeleteBoard,
+  canDeleteBoard,
+} from './boards.access.js';
 import {toBoardSummary, toStage, toTask} from './boards.mappers.js';
 import * as repo from './boards.repository.js';
 
@@ -63,18 +68,22 @@ export function getBoard(db, boardId, userId) {
 }
 
 /**
- * Creates a personal board seeded with the default stages.
+ * Creates a board seeded with the default stages: personal, or shared with
+ * a team the user belongs to.
  * @param {!Object} db
- * @param {{name: string}} input
+ * @param {{name: string, teamId?: number}} input
  * @param {number} userId
  * @return {!Object} The full board.
  */
-export function createBoard(db, {name}, userId) {
-  const board = db.transaction(() => {
+export function createBoard(db, {name, teamId}, userId) {
+  if (teamId != null) {
+    assertTeamMember(db, teamId, userId);
+  }
+  const boardId = db.transaction(() => {
     const row = repo.insertBoard(db, {
       name: name.trim(),
-      ownerUserId: userId,
-      teamId: null,
+      ownerUserId: teamId == null ? userId : null,
+      teamId: teamId ?? null,
       createdBy: userId,
     });
     let position = null;
@@ -82,9 +91,9 @@ export function createBoard(db, {name}, userId) {
       position = nextPosition(position);
       insertStage(db, {boardId: row.id, name: stageName, position});
     }
-    return row;
+    return row.id;
   })();
-  return fullBoard(db, board, userId);
+  return getBoard(db, boardId, userId);
 }
 
 /**
@@ -96,15 +105,18 @@ export function createBoard(db, {name}, userId) {
  */
 export function renameBoard(db, boardId, {name}, userId) {
   assertBoardAccess(db, boardId, userId);
-  return toBoardSummary(repo.renameBoard(db, boardId, name.trim()));
+  repo.renameBoard(db, boardId, name.trim());
+  return toBoardSummary(assertBoardAccess(db, boardId, userId));
 }
 
 /**
  * @param {!Object} db
  * @param {number} boardId
  * @param {number} userId
+ * @return {!Object} The deleted board's row.
  */
 export function deleteBoard(db, boardId, userId) {
-  assertBoardAccess(db, boardId, userId);
+  const board = assertCanDeleteBoard(db, boardId, userId);
   repo.deleteBoard(db, boardId);
+  return board;
 }

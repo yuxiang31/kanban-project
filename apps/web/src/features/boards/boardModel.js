@@ -30,3 +30,30 @@ export function neighboursForStep(items, index, direction) {
 export function pluralize(count, noun) {
   return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
+
+/**
+ * Splits boards into a "Personal" section followed by one section per team
+ * (alphabetical). Empty sections are left out.
+ * @param {!Array<!Object>} boards
+ * @return {!Array<{key: string, title: string, boards: !Array<!Object>}>}
+ */
+export function groupBoardsByTeam(boards) {
+  const personal = boards.filter((b) => !b.team);
+  const teams = new Map();
+  for (const board of boards.filter((b) => b.team)) {
+    if (!teams.has(board.team.id)) {
+      teams.set(board.team.id, {
+        key: `team-${board.team.id}`,
+        title: board.team.name,
+        boards: [],
+      });
+    }
+    teams.get(board.team.id).boards.push(board);
+  }
+  const sections = [...teams.values()].sort((a, b) =>
+    a.title.localeCompare(b.title),
+  );
+  return personal.length > 0
+    ? [{key: 'personal', title: 'Personal', boards: personal}, ...sections]
+    : sections;
+}

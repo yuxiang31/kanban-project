@@ -56,3 +56,23 @@ export async function signUp(app, username) {
       app.inject({method, url, payload, headers: {cookie}}),
   };
 }
+
+/**
+ * Creates a team owned by `owner` and adds the given members.
+ * @param {!Object} owner A client from signUp.
+ * @param {string} name
+ * @param {!Array<!Object>=} members Clients from signUp.
+ * @return {!Promise<!Object>} The team.
+ */
+export async function createTeamWith(owner, name, members = []) {
+  const {team} = (await owner.request('POST', '/api/teams', {name})).json();
+  for (const member of members) {
+    const res = await owner.request('POST', `/api/teams/${team.id}/members`, {
+      username: member.user.username,
+    });
+    if (res.statusCode !== 201) {
+      throw new Error(`add member failed: ${res.body}`);
+    }
+  }
+  return team;
+}

@@ -9,6 +9,8 @@ import LoginPage from './features/auth/LoginPage.jsx';
 import RegisterPage from './features/auth/RegisterPage.jsx';
 import BoardListPage from './features/boards/BoardListPage.jsx';
 import BoardPage from './features/boards/BoardPage.jsx';
+import TeamDetailPage from './features/teams/TeamDetailPage.jsx';
+import TeamsPage from './features/teams/TeamsPage.jsx';
 
 function NotFoundPage() {
   return (
@@ -35,6 +37,8 @@ export const routes = [
         children: [
           {path: '/', element: <BoardListPage />},
           {path: '/boards/:boardId', element: <BoardPage />},
+          {path: '/teams', element: <TeamsPage />},
+          {path: '/teams/:teamId', element: <TeamDetailPage />},
         ],
       },
     ],

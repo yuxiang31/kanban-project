@@ -3,17 +3,23 @@ import {useNavigate} from 'react-router';
 import * as api from '../../api/boards.js';
 import ErrorMessage from '../../components/ErrorMessage.jsx';
 import Modal from '../../components/Modal.jsx';
+import {useTeams} from '../teams/teamQueries.js';
 import {useBoardMutation} from './boardQueries.js';
 
 /** @param {{onClose: function()}} props */
 export default function CreateBoardDialog({onClose}) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
+  const [teamId, setTeamId] = useState('');
+  const teams = useTeams();
   const create = useBoardMutation(api.createBoard);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const board = await create.mutateAsync({name: name.trim()});
+    const board = await create.mutateAsync({
+      name: name.trim(),
+      ...(teamId && {teamId: Number(teamId)}),
+    });
     navigate(`/boards/${board.id}`);
   }
 
@@ -27,6 +33,20 @@ export default function CreateBoardDialog({onClose}) {
             maxLength={100}
             onChange={(event) => setName(event.target.value)}
           />
+        </label>
+        <label>
+          Share with
+          <select
+            value={teamId}
+            onChange={(event) => setTeamId(event.target.value)}
+          >
+            <option value="">Only me</option>
+            {teams.data?.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
         </label>
         <p className="muted small">
           Starts with To Do, In Progress and Done. You can change the stages

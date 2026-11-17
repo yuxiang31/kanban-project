@@ -2,12 +2,15 @@
  * @fileoverview Row → API shape conversions for boards, stages and tasks.
  */
 
-/** @param {!Object} row */
+/**
+ * @param {!Object} row A boards row joined with `team_name`.
+ */
 export function toBoardSummary(row) {
   return {
     id: row.id,
     name: row.name,
     teamId: row.team_id,
+    team: row.team_id == null ? null : {id: row.team_id, name: row.team_name},
     createdBy: row.created_by,
     createdAt: row.created_at,
   };

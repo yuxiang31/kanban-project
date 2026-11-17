@@ -137,7 +137,15 @@ function BoardView({board}) {
             onCancel={() => setRenaming(false)}
           />
         ) : (
-          <h1>{board.name}</h1>
+          <div>
+            <h1>{board.name}</h1>
+            {board.team && (
+              <p className="muted small board-team">
+                Shared with{' '}
+                <Link to={`/teams/${board.team.id}`}>{board.team.name}</Link>
+              </p>
+            )}
+          </div>
         )}
         <div className="board-actions">
           {!renaming && (

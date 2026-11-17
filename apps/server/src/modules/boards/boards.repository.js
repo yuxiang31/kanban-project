@@ -5,19 +5,24 @@
 /**
  * @param {!Object} db
  * @param {number} userId
- * @return {!Array<!Object>} Boards visible to the user, newest first, each
- *     with a `task_count`.
+ * @return {!Array<!Object>} Personal boards plus boards of the user's teams,
+ *     newest first, each with `team_name` and `task_count`.
  */
 export function listBoardsForUser(db, userId) {
   return db
     .prepare(
-      `SELECT b.*, (SELECT COUNT(*) FROM tasks t WHERE t.board_id = b.id)
-                   AS task_count
+      `SELECT b.*, t.name AS team_name,
+              (SELECT COUNT(*) FROM tasks k WHERE k.board_id = b.id)
+                AS task_count
        FROM boards b
-       WHERE b.owner_user_id = ?
+       LEFT JOIN teams t ON t.id = b.team_id
+       WHERE b.owner_user_id = @userId
+          OR b.team_id IN (
+            SELECT team_id FROM team_members WHERE user_id = @userId
+          )
        ORDER BY b.created_at DESC, b.id DESC`,
     )
-    .all(userId);
+    .all({userId});
 }
 
 /**
