@@ -18,6 +18,9 @@ import {
 /** What the board is for; may be empty. */
 const description = {type: 'string', maxLength: 1000};
 
+/** A calendar day; null clears it. The service rejects impossible days. */
+const dueDate = {type: ['string', 'null'], pattern: '^\\d{4}-\\d{2}-\\d{2}$'};
+
 const createBody = {
   type: 'object',
   required: ['name'],
@@ -27,6 +30,7 @@ const createBody = {
     description,
     teamId: {type: 'integer', minimum: 1},
     color: colorSchema,
+    dueDate,
   },
 };
 
@@ -34,7 +38,7 @@ const updateBody = {
   type: 'object',
   minProperties: 1,
   additionalProperties: false,
-  properties: {name: nonBlank(100), description, color: colorSchema},
+  properties: {name: nonBlank(100), description, color: colorSchema, dueDate},
 };
 
 export default async function boardRoutes(app) {

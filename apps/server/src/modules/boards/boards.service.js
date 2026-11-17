@@ -3,6 +3,7 @@
  * full board payload, rename and delete.
  */
 
+import {badRequest} from '../../utils/errors.js';
 import {nextPosition} from '../../utils/position.js';
 import {insertStage, listStages} from '../stages/stages.repository.js';
 import {listTasks} from '../tasks/tasks.repository.js';
@@ -19,6 +20,25 @@ import * as repo from './boards.repository.js';
 export const DEFAULT_STAGES = ['To Do', 'In Progress', 'Done'];
 
 /**
+ * The schema only checks the YYYY-MM-DD shape; this rejects days that do
+ * not exist, such as 2026-02-30.
+ * @param {?string|undefined} dueDate
+ * @return {?string|undefined} The same value.
+ */
+function checkDueDate(dueDate) {
+  if (dueDate != null) {
+    const parsed = new Date(`${dueDate}T00:00:00Z`);
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== dueDate
+    ) {
+      throw badRequest('Due date is not a real date.');
+    }
+  }
+  return dueDate;
+}
+
+/**
  * @param {!Object} db
  * @param {number} userId
  * @return {!Array<!Object>}
@@ -27,6 +47,7 @@ export function listBoards(db, userId) {
   return repo.listBoardsForUser(db, userId).map((row) => ({
     ...toBoardSummary(row),
     taskCount: row.task_count,
+    memberCount: row.member_count,
   }));
 }
 
@@ -74,11 +95,16 @@ export function getBoard(db, boardId, userId) {
  * a team the user belongs to.
  * @param {!Object} db
  * @param {{name: string, description?: string, teamId?: number,
- *     color?: ?string}} input
+ *     color?: ?string, dueDate?: ?string}} input
  * @param {number} userId
  * @return {!Object} The full board.
  */
-export function createBoard(db, {name, description, teamId, color}, userId) {
+export function createBoard(
+  db,
+  {name, description, teamId, color, dueDate},
+  userId,
+) {
+  checkDueDate(dueDate);
   if (teamId != null) {
     assertTeamMember(db, teamId, userId);
   }
@@ -90,6 +116,7 @@ export function createBoard(db, {name, description, teamId, color}, userId) {
       teamId: teamId ?? null,
       createdBy: userId,
       color,
+      dueDate,
     });
     let position = null;
     for (const stageName of DEFAULT_STAGES) {
@@ -102,10 +129,12 @@ export function createBoard(db, {name, description, teamId, color}, userId) {
 }
 
 /**
- * Changes a board's name, description and/or colour (null clears it).
+ * Changes a board's name, description, colour and/or due date (null clears
+ * the colour or due date).
  * @param {!Object} db
  * @param {number} boardId
- * @param {{name?: string, description?: string, color?: ?string}} input
+ * @param {{name?: string, description?: string, color?: ?string,
+ *     dueDate?: ?string}} input
  * @param {number} userId
  * @return {!Object} The board summary.
  */
@@ -115,6 +144,7 @@ export function updateBoard(db, boardId, input, userId) {
     name: input.name?.trim() ?? board.name,
     description: input.description?.trim() ?? board.description,
     color: 'color' in input ? input.color : board.color,
+    dueDate: 'dueDate' in input ? checkDueDate(input.dueDate) : board.due_date,
   });
   return toBoardSummary(assertBoardAccess(db, boardId, userId));
 }

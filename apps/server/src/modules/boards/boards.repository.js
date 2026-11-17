@@ -6,14 +6,19 @@
  * @param {!Object} db
  * @param {number} userId
  * @return {!Array<!Object>} Personal boards plus boards of the user's teams,
- *     newest first, each with `team_name` and `task_count`.
+ *     newest first, each with `team_name`, `task_count` and
+ *     `member_count` (1 for a personal board, the team's size otherwise).
  */
 export function listBoardsForUser(db, userId) {
   return db
     .prepare(
       `SELECT b.*, t.name AS team_name,
               (SELECT COUNT(*) FROM tasks k WHERE k.board_id = b.id)
-                AS task_count
+                AS task_count,
+              CASE WHEN b.team_id IS NULL THEN 1
+                   ELSE (SELECT COUNT(*) FROM team_members m
+                         WHERE m.team_id = b.team_id)
+              END AS member_count
        FROM boards b
        LEFT JOIN teams t ON t.id = b.team_id
        WHERE b.owner_user_id = @userId
@@ -28,18 +33,20 @@ export function listBoardsForUser(db, userId) {
 /**
  * @param {!Object} db
  * @param {{name: string, ownerUserId: ?number, teamId: ?number,
- *     createdBy: number, color?: ?string, description?: string}} board
+ *     createdBy: number, color?: ?string, description?: string,
+ *     dueDate?: ?string}} board
  * @return {!Object} The inserted row.
  */
 export function insertBoard(
   db,
-  {name, description, ownerUserId, teamId, createdBy, color},
+  {name, description, ownerUserId, teamId, createdBy, color, dueDate},
 ) {
   return db
     .prepare(
       `INSERT INTO boards
-         (name, description, owner_user_id, team_id, created_by, color)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
+         (name, description, owner_user_id, team_id, created_by, color,
+          due_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       name,
@@ -48,22 +55,24 @@ export function insertBoard(
       teamId,
       createdBy,
       color ?? null,
+      dueDate ?? null,
     );
 }
 
 /**
  * @param {!Object} db
  * @param {number} id
- * @param {{name: string, description: string, color: ?string}} fields
+ * @param {{name: string, description: string, color: ?string,
+ *     dueDate: ?string}} fields
  * @return {!Object} The updated row.
  */
-export function updateBoard(db, id, {name, description, color}) {
+export function updateBoard(db, id, {name, description, color, dueDate}) {
   return db
     .prepare(
-      `UPDATE boards SET name = ?, description = ?, color = ?
+      `UPDATE boards SET name = ?, description = ?, color = ?, due_date = ?
        WHERE id = ? RETURNING *`,
     )
-    .get(name, description, color, id);
+    .get(name, description, color, dueDate, id);
 }
 
 /**

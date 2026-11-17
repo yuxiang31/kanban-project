@@ -12,6 +12,7 @@ export function toBoardSummary(row) {
     description: row.description,
     teamId: row.team_id,
     color: row.color,
+    dueDate: row.due_date,
     team: row.team_id == null ? null : {id: row.team_id, name: row.team_name},
     createdBy: row.created_by,
     createdAt: row.created_at,

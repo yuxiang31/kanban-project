@@ -14,6 +14,7 @@ export default function CreateBoardDialog({onClose}) {
   const [teamId, setTeamId] = useState('');
   const [color, setColor] = useState(null);
   const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const teams = useTeams();
   const create = useBoardMutation(api.createBoard);
 
@@ -24,6 +25,7 @@ export default function CreateBoardDialog({onClose}) {
       ...(teamId && {teamId: Number(teamId)}),
       ...(description.trim() && {description: description.trim()}),
       ...(color && {color}),
+      ...(dueDate && {dueDate}),
     });
     navigate(`/boards/${board.id}`);
   }
@@ -40,13 +42,25 @@ export default function CreateBoardDialog({onClose}) {
           />
         </label>
         <label>
-          What is this board for? <span className="muted">(optional)</span>
+          <span>
+            What is this board for? <span className="muted">(optional)</span>
+          </span>
           <textarea
             value={description}
             maxLength={1000}
             rows={4}
             placeholder="e.g. Everything needed to ship v2 by March"
             onChange={(event) => setDescription(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>
+            Due date <span className="muted">(optional)</span>
+          </span>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
           />
         </label>
         <label>

@@ -92,3 +92,18 @@ export const PaletteIcon = () => (
     <circle cx="12.6" cy="6.6" r="0.9" fill="currentColor" />
   </Icon>
 );
+
+export const CalendarIcon = () => (
+  <Icon>
+    <rect x="3.5" y="4.5" width="13" height="12" rx="2" />
+    <path d="M3.5 8.5h13M7 3v3M13 3v3" />
+  </Icon>
+);
+
+export const PeopleIcon = () => (
+  <Icon>
+    <circle cx="7.5" cy="7" r="2.6" />
+    <path d="M2.8 16a4.7 4.7 0 019.4 0" />
+    <path d="M12.6 4.6a2.6 2.6 0 010 4.8M14.6 11.6a4.7 4.7 0 012.6 4.4" />
+  </Icon>
+);

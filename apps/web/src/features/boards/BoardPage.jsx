@@ -26,6 +26,7 @@ import Skeleton from '../../components/Skeleton.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import BoardColorDialog from './BoardColorDialog.jsx';
 import BoardDescription from './BoardDescription.jsx';
+import BoardDueDate from './BoardDueDate.jsx';
 import {BoardOperationContext, OPERATION_HINT} from './boardOperation.js';
 import {useBoardSocket} from '../../hooks/useBoardSocket.js';
 import AddStageForm from '../stages/AddStageForm.jsx';
@@ -258,6 +259,7 @@ function BoardView({board}) {
                 </p>
               )}
               <BoardDescription board={board} />
+              <BoardDueDate board={board} />
             </div>
           )}
           <div className="board-actions">
