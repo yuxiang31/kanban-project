@@ -13,6 +13,7 @@ export default function CreateBoardDialog({onClose}) {
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
   const [color, setColor] = useState(null);
+  const [description, setDescription] = useState('');
   const teams = useTeams();
   const create = useBoardMutation(api.createBoard);
 
@@ -21,6 +22,7 @@ export default function CreateBoardDialog({onClose}) {
     const board = await create.mutateAsync({
       name: name.trim(),
       ...(teamId && {teamId: Number(teamId)}),
+      ...(description.trim() && {description: description.trim()}),
       ...(color && {color}),
     });
     navigate(`/boards/${board.id}`);
@@ -35,6 +37,16 @@ export default function CreateBoardDialog({onClose}) {
             value={name}
             maxLength={100}
             onChange={(event) => setName(event.target.value)}
+          />
+        </label>
+        <label>
+          What is this board for? <span className="muted">(optional)</span>
+          <textarea
+            value={description}
+            maxLength={1000}
+            rows={4}
+            placeholder="e.g. Everything needed to ship v2 by March"
+            onChange={(event) => setDescription(event.target.value)}
           />
         </label>
         <label>

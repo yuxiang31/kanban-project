@@ -1,7 +1,8 @@
 /**
- * @fileoverview One stage (column): a drag handle and header actions, its
+ * @fileoverview One stage (column): a header with its actions, its
  * sortable tasks and an add-task form. The section is itself a drop target
- * so tasks can be dropped into an empty stage.
+ * so tasks can be dropped into an empty stage. While any change is open on
+ * the board, the stage's own controls wait (see boardOperation.js).
  */
 
 import {useState} from 'react';
@@ -12,18 +13,21 @@ import {
 } from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import * as api from '../../api/boards.js';
+import ColorDialog from '../../components/ColorDialog.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
-import InlineEditForm from '../../components/InlineEditForm.jsx';
-import {useBoardMutation} from '../boards/boardQueries.js';
-import {pluralize} from '../boards/boardModel.js';
-import {stageDndId, taskDndId} from '../boards/dnd.js';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   GripIcon,
+  PaletteIcon,
   PencilIcon,
   TrashIcon,
 } from '../../components/Icons.jsx';
+import InlineEditForm from '../../components/InlineEditForm.jsx';
+import {useBoardMutation} from '../boards/boardQueries.js';
+import {pluralize} from '../boards/boardModel.js';
+import {OPERATION_HINT, useBoardOperation} from '../boards/boardOperation.js';
+import {stageDndId, taskDndId} from '../boards/dnd.js';
 import AddTaskForm from '../tasks/AddTaskForm.jsx';
 import TaskCard from '../tasks/TaskCard.jsx';
 import TaskDialog from '../tasks/TaskDialog.jsx';
@@ -52,8 +56,14 @@ export default function Stage({
 }) {
   const [renaming, setRenaming] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [choosingColor, setChoosingColor] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+  const renameOp = useBoardOperation(`rename-stage:${stage.id}`);
+  const {locked} = renameOp;
   const rename = useBoardMutation((name) => api.updateStage(stage.id, {name}));
+  const recolor = useBoardMutation((color) =>
+    api.updateStage(stage.id, {color}),
+  );
   const remove = useBoardMutation(() => api.deleteStage(stage.id));
   const openTask = tasks.find((task) => task.id === openTaskId);
   const memberById = new Map(members.map((m) => [m.id, m]));
@@ -68,7 +78,24 @@ export default function Stage({
     transform,
     transition,
     isDragging,
-  } = useSortable({id: stageDndId(stage.id), data: {type: 'stage'}});
+  } = useSortable({
+    id: stageDndId(stage.id),
+    data: {type: 'stage'},
+    disabled: locked,
+  });
+  /** Explains a paused control on hover. */
+  const pausedTitle = locked ? OPERATION_HINT : undefined;
+
+  function startRename() {
+    if (renameOp.start()) {
+      setRenaming(true);
+    }
+  }
+
+  function stopRename() {
+    setRenaming(false);
+    renameOp.stop();
+  }
 
   async function handleDelete() {
     setConfirmingDelete(false);
@@ -84,6 +111,7 @@ export default function Stage({
       ref={setNodeRef}
       style={{transform: CSS.Translate.toString(transform), transition}}
       className={`stage${isDragging ? ' is-dragging' : ''}`}
+      data-color={stage.color ?? undefined}
       aria-label={stage.name}
     >
       <header className="stage-header">
@@ -94,22 +122,23 @@ export default function Stage({
             maxLength={50}
             onSave={async (name) => {
               await rename.mutateAsync(name);
-              setRenaming(false);
+              stopRename();
             }}
-            onCancel={() => setRenaming(false)}
+            onCancel={stopRename}
           />
         ) : (
           <>
             <h2 className="stage-title">
               {stage.name} <span className="count">{tasks.length}</span>
             </h2>
-            <div className="stage-actions">
+            <div className="stage-actions" title={pausedTitle}>
               <button
                 ref={setActivatorNodeRef}
                 type="button"
                 className="icon-button drag-handle"
                 {...attributes}
                 {...listeners}
+                disabled={locked}
                 aria-label={`Drag stage ${stage.name}`}
               >
                 <GripIcon />
@@ -118,7 +147,7 @@ export default function Stage({
                 type="button"
                 className="icon-button"
                 aria-label={`Move ${stage.name} left`}
-                disabled={!canMoveLeft}
+                disabled={locked || !canMoveLeft}
                 onClick={() => onMove(-1)}
               >
                 <ArrowLeftIcon />
@@ -127,7 +156,7 @@ export default function Stage({
                 type="button"
                 className="icon-button"
                 aria-label={`Move ${stage.name} right`}
-                disabled={!canMoveRight}
+                disabled={locked || !canMoveRight}
                 onClick={() => onMove(1)}
               >
                 <ArrowRightIcon />
@@ -135,8 +164,18 @@ export default function Stage({
               <button
                 type="button"
                 className="icon-button"
+                aria-label={`Colour for stage ${stage.name}`}
+                disabled={locked}
+                onClick={() => setChoosingColor(true)}
+              >
+                <PaletteIcon />
+              </button>
+              <button
+                type="button"
+                className="icon-button"
                 aria-label={`Rename stage ${stage.name}`}
-                onClick={() => setRenaming(true)}
+                disabled={locked}
+                onClick={startRename}
               >
                 <PencilIcon />
               </button>
@@ -144,6 +183,7 @@ export default function Stage({
                 type="button"
                 className="icon-button"
                 aria-label={`Delete stage ${stage.name}`}
+                disabled={locked}
                 onClick={() => setConfirmingDelete(true)}
               >
                 <TrashIcon />
@@ -175,6 +215,15 @@ export default function Stage({
           task={openTask}
           members={members}
           onClose={() => setOpenTaskId(null)}
+        />
+      )}
+      {choosingColor && (
+        <ColorDialog
+          title={`Colour for ${stage.name}`}
+          initial={stage.color}
+          note="Shown as an outline around the stage."
+          onSave={(color) => recolor.mutateAsync(color)}
+          onClose={() => setChoosingColor(false)}
         />
       )}
       {confirmingDelete && (

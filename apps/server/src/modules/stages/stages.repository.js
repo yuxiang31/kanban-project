@@ -47,15 +47,16 @@ export function insertStage(db, {boardId, name, position}) {
 /**
  * @param {!Object} db
  * @param {number} id
- * @param {{name: string, position: number}} fields
+ * @param {{name: string, position: number, color: ?string}} fields
  * @return {!Object} The updated row.
  */
-export function updateStage(db, id, {name, position}) {
+export function updateStage(db, id, {name, position, color}) {
   return db
     .prepare(
-      'UPDATE stages SET name = ?, position = ? WHERE id = ? RETURNING *',
+      `UPDATE stages SET name = ?, position = ?, color = ?
+       WHERE id = ? RETURNING *`,
     )
-    .get(name, position, id);
+    .get(name, position, color, id);
 }
 
 /** @param {!Object} db @param {number} id */

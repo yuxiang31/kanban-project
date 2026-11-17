@@ -3,6 +3,7 @@
  */
 
 import {publish} from '../../utils/events.js';
+import {colorSchema} from '../../utils/palette.js';
 import {idParams, neighbourId, nonBlank} from '../../utils/schemas.js';
 import {createStage, deleteStage, updateStage} from './stages.service.js';
 
@@ -45,6 +46,7 @@ export default async function stageRoutes(app) {
           additionalProperties: false,
           properties: {
             name: nonBlank(50),
+            color: colorSchema,
             prevId: neighbourId,
             nextId: neighbourId,
           },

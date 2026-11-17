@@ -15,12 +15,16 @@ import {
   updateBoard,
 } from './boards.service.js';
 
+/** What the board is for; may be empty. */
+const description = {type: 'string', maxLength: 1000};
+
 const createBody = {
   type: 'object',
   required: ['name'],
   additionalProperties: false,
   properties: {
     name: nonBlank(100),
+    description,
     teamId: {type: 'integer', minimum: 1},
     color: colorSchema,
   },
@@ -30,7 +34,7 @@ const updateBody = {
   type: 'object',
   minProperties: 1,
   additionalProperties: false,
-  properties: {name: nonBlank(100), color: colorSchema},
+  properties: {name: nonBlank(100), description, color: colorSchema},
 };
 
 export default async function boardRoutes(app) {

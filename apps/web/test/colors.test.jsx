@@ -55,7 +55,7 @@ describe('task colours', () => {
     expect(within(group).getByRole('radio', {name: 'None'})).toBeChecked();
   });
 
-  it('gives a task a colour, shown as a stripe and in its name', async () => {
+  it('gives a task a colour, shown as an outline and in its name', async () => {
     const {user, dialog} = await openTask();
     await user.click(within(dialog).getByRole('radio', {name: 'Sky'}));
     await user.click(within(dialog).getByRole('button', {name: /save/i}));

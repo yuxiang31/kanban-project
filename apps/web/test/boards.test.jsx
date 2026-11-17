@@ -15,7 +15,8 @@ const stage = (name) => screen.getByRole('region', {name});
 const taskTitles = (stageName) =>
   within(stage(stageName))
     .queryAllByRole('button', {name: /^open task/i})
-    .map((b) => b.textContent);
+    // The card also shows a description preview; read just the title.
+    .map((b) => b.querySelector('.task-title').textContent);
 
 describe('board list', () => {
   it('shows an empty state', async () => {

@@ -8,6 +8,7 @@ import {useSortable} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import {AvatarStack} from '../../components/Avatar.jsx';
 import {listNames} from '../../utils/people.js';
+import {useBoardOperation} from '../boards/boardOperation.js';
 import {taskDndId} from '../boards/dnd.js';
 
 /**
@@ -15,20 +16,33 @@ import {taskDndId} from '../boards/dnd.js';
  *     props
  */
 export default function TaskCard({task, assignees, onOpen}) {
+  // While another change is open on the board, the card can't be opened
+  // or dragged.
+  const {locked} = useBoardOperation();
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       id: taskDndId(task.id),
       data: {type: 'task'},
+      disabled: locked,
     });
+
+  function open() {
+    if (!locked) {
+      onOpen();
+    }
+  }
 
   function handleKeyDown(event) {
     if (event.key === 'Enter' && !isDragging) {
       event.preventDefault();
-      onOpen();
+      open();
       return;
     }
     listeners?.onKeyDown?.(event);
   }
+
+  /** The description as one line; CSS shows at most two lines of it. */
+  const preview = task.description?.replace(/\s+/g, ' ').trim();
 
   const label = [
     `Open task ${task.title}`,
@@ -48,10 +62,14 @@ export default function TaskCard({task, assignees, onOpen}) {
       {...attributes}
       {...listeners}
       aria-label={label}
-      onClick={onOpen}
+      aria-disabled={locked || undefined}
+      onClick={open}
       onKeyDown={handleKeyDown}
     >
-      <span className="task-title">{task.title}</span>
+      <span className="task-main">
+        <span className="task-title">{task.title}</span>
+        {preview && <span className="task-desc">{preview}</span>}
+      </span>
       <AvatarStack users={assignees} />
     </div>
   );

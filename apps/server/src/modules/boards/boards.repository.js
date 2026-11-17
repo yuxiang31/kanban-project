@@ -28,28 +28,42 @@ export function listBoardsForUser(db, userId) {
 /**
  * @param {!Object} db
  * @param {{name: string, ownerUserId: ?number, teamId: ?number,
- *     createdBy: number, color?: ?string}} board
+ *     createdBy: number, color?: ?string, description?: string}} board
  * @return {!Object} The inserted row.
  */
-export function insertBoard(db, {name, ownerUserId, teamId, createdBy, color}) {
+export function insertBoard(
+  db,
+  {name, description, ownerUserId, teamId, createdBy, color},
+) {
   return db
     .prepare(
-      `INSERT INTO boards (name, owner_user_id, team_id, created_by, color)
-       VALUES (?, ?, ?, ?, ?) RETURNING *`,
+      `INSERT INTO boards
+         (name, description, owner_user_id, team_id, created_by, color)
+       VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
     )
-    .get(name, ownerUserId, teamId, createdBy, color ?? null);
+    .get(
+      name,
+      description ?? '',
+      ownerUserId,
+      teamId,
+      createdBy,
+      color ?? null,
+    );
 }
 
 /**
  * @param {!Object} db
  * @param {number} id
- * @param {{name: string, color: ?string}} fields
+ * @param {{name: string, description: string, color: ?string}} fields
  * @return {!Object} The updated row.
  */
-export function updateBoard(db, id, {name, color}) {
+export function updateBoard(db, id, {name, description, color}) {
   return db
-    .prepare('UPDATE boards SET name = ?, color = ? WHERE id = ? RETURNING *')
-    .get(name, color, id);
+    .prepare(
+      `UPDATE boards SET name = ?, description = ?, color = ?
+       WHERE id = ? RETURNING *`,
+    )
+    .get(name, description, color, id);
 }
 
 /**

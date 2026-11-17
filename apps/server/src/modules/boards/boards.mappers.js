@@ -9,6 +9,7 @@ export function toBoardSummary(row) {
   return {
     id: row.id,
     name: row.name,
+    description: row.description,
     teamId: row.team_id,
     color: row.color,
     team: row.team_id == null ? null : {id: row.team_id, name: row.team_name},
@@ -23,6 +24,7 @@ export function toStage(row) {
     id: row.id,
     boardId: row.board_id,
     name: row.name,
+    color: row.color,
     position: row.position,
   };
 }

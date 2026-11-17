@@ -3,10 +3,17 @@ import * as api from '../../api/boards.js';
 import {PlusIcon} from '../../components/Icons.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import {useBoardMutation} from '../boards/boardQueries.js';
+import {OPERATION_HINT, useBoardOperation} from '../boards/boardOperation.js';
 
 /** @param {{boardId: number}} props */
 export default function AddStageForm({boardId}) {
+  const op = useBoardOperation('add-stage');
   const [open, setOpen] = useState(false);
+
+  function close() {
+    setOpen(false);
+    op.stop();
+  }
   const create = useBoardMutation((name) => api.createStage(boardId, {name}));
 
   if (!open) {
@@ -14,7 +21,9 @@ export default function AddStageForm({boardId}) {
       <button
         type="button"
         className="add-stage-button"
-        onClick={() => setOpen(true)}
+        disabled={op.locked}
+        title={op.locked ? OPERATION_HINT : undefined}
+        onClick={() => op.start() && setOpen(true)}
       >
         <PlusIcon />
         Add stage
@@ -29,9 +38,9 @@ export default function AddStageForm({boardId}) {
         submitLabel="Add"
         onSave={async (name) => {
           await create.mutateAsync(name);
-          setOpen(false);
+          close();
         }}
-        onCancel={() => setOpen(false)}
+        onCancel={close}
       />
     </div>
   );

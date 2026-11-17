@@ -77,6 +77,11 @@ export default function BoardListPage() {
                     data-color={board.color ?? undefined}
                   >
                     <span className="board-card-name">{board.name}</span>
+                    {board.description && (
+                      <span className="board-card-desc">
+                        {board.description}
+                      </span>
+                    )}
                     <span className="muted small">
                       {pluralize(board.taskCount, 'task')}
                     </span>

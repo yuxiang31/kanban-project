@@ -83,3 +83,12 @@ export const MoonIcon = () => (
     <path d="M16 12.2A6.5 6.5 0 017.8 4a6.5 6.5 0 108.2 8.2z" />
   </Icon>
 );
+
+export const PaletteIcon = () => (
+  <Icon>
+    <path d="M10 3a7 7 0 100 14c1 0 1.5-.7 1.5-1.4 0-1-1-1.3-1-2.2 0-.8.7-1.4 1.5-1.4h1.6A3.4 3.4 0 0017 8.6C17 5.5 13.9 3 10 3z" />
+    <circle cx="6.5" cy="9" r="0.9" fill="currentColor" />
+    <circle cx="9" cy="6" r="0.9" fill="currentColor" />
+    <circle cx="12.6" cy="6.6" r="0.9" fill="currentColor" />
+  </Icon>
+);

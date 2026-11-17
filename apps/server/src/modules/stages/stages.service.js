@@ -43,7 +43,8 @@ export function createStage(db, boardId, {name}, userId) {
  * and/or `nextId` (the stages it should land between).
  * @param {!Object} db
  * @param {number} stageId
- * @param {{name?: string, prevId?: ?number, nextId?: ?number}} input
+ * @param {{name?: string, color?: ?string, prevId?: ?number,
+ *     nextId?: ?number}} input
  * @param {number} userId
  * @return {!Object}
  */
@@ -64,6 +65,7 @@ export function updateStage(db, stageId, input, userId) {
     repo.updateStage(db, stage.id, {
       name: input.name?.trim() ?? stage.name,
       position,
+      color: 'color' in input ? input.color : stage.color,
     }),
   );
 }

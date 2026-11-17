@@ -76,13 +76,14 @@ export function createFakeApi({me = users.alice} = {}) {
   function seedBoard(
     name,
     stageNames = ['To Do', 'In Progress', 'Done'],
-    {teamId = null, color = null} = {},
+    {teamId = null, color = null, description = ''} = {},
   ) {
     const board = {
       id: id(),
       name,
       teamId,
       color,
+      description,
       team: teamSummary(teamId),
       createdBy: 1,
       createdAt: '2026-11-17 10:00:00',
@@ -145,6 +146,7 @@ export function createFakeApi({me = users.alice} = {}) {
           board: seedBoard(body.name, undefined, {
             teamId: body.teamId ?? null,
             color: body.color ?? null,
+            description: body.description ?? '',
           }),
         },
       }),
@@ -272,6 +274,9 @@ export function createFakeApi({me = users.alice} = {}) {
         const stage = state.stages.find((s) => s.id === stageId);
         if (body.name) {
           stage.name = body.name;
+        }
+        if ('color' in body) {
+          stage.color = body.color;
         }
         if ('prevId' in body || 'nextId' in body) {
           const pos = (sid) => state.stages.find((s) => s.id === sid)?.position;

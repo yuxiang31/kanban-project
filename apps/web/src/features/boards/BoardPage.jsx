@@ -3,7 +3,7 @@
  * and drop (pointer or keyboard) for tasks and stages.
  */
 
-import {useMemo, useState} from 'react';
+import {useMemo, useRef, useState} from 'react';
 import {Link, useNavigate, useParams, useSearchParams} from 'react-router';
 import {useQueryClient} from '@tanstack/react-query';
 import {
@@ -25,6 +25,8 @@ import ErrorMessage from '../../components/ErrorMessage.jsx';
 import Skeleton from '../../components/Skeleton.jsx';
 import InlineEditForm from '../../components/InlineEditForm.jsx';
 import BoardColorDialog from './BoardColorDialog.jsx';
+import BoardDescription from './BoardDescription.jsx';
+import {BoardOperationContext, OPERATION_HINT} from './boardOperation.js';
 import {useBoardSocket} from '../../hooks/useBoardSocket.js';
 import AddStageForm from '../stages/AddStageForm.jsx';
 import Stage from '../stages/Stage.jsx';
@@ -88,6 +90,44 @@ function BoardView({board}) {
   const [choosingColor, setChoosingColor] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [actionError, setActionError] = useState(null);
+
+  // One change at a time (boardOperation.js). A ref keeps begin/end
+  // correct when two clicks land before React re-renders.
+  const [activeOp, setActiveOp] = useState(null);
+  const activeOpRef = useRef(null);
+  const operation = useMemo(
+    () => ({
+      active: activeOp,
+      begin(key) {
+        if (activeOpRef.current !== null && activeOpRef.current !== key) {
+          return false;
+        }
+        activeOpRef.current = key;
+        setActiveOp(key);
+        return true;
+      },
+      end(key) {
+        if (activeOpRef.current === key) {
+          activeOpRef.current = null;
+          setActiveOp(null);
+        }
+      },
+    }),
+    [activeOp],
+  );
+  const locked = activeOp !== null;
+  const pausedTitle = locked ? OPERATION_HINT : undefined;
+
+  function startRenaming() {
+    if (operation.begin('rename-board')) {
+      setRenaming(true);
+    }
+  }
+
+  function stopRenaming() {
+    setRenaming(false);
+    operation.end('rename-board');
+  }
 
   const rename = useBoardMutation((name) => api.renameBoard(board.id, {name}));
 
@@ -185,162 +225,176 @@ function BoardView({board}) {
   const active = parseDndId(activeId);
 
   return (
-    <main className="board-page">
-      <div className="board-header">
-        {renaming ? (
-          <InlineEditForm
-            label="Board name"
-            initialValue={board.name}
-            maxLength={100}
-            onSave={async (name) => {
-              await rename.mutateAsync(name);
-              setRenaming(false);
-            }}
-            onCancel={() => setRenaming(false)}
-          />
-        ) : (
-          <div>
-            <h1>
+    <BoardOperationContext.Provider value={operation}>
+      <main className="board-page">
+        <div className="board-header">
+          {renaming ? (
+            <InlineEditForm
+              label="Board name"
+              initialValue={board.name}
+              maxLength={100}
+              onSave={async (name) => {
+                await rename.mutateAsync(name);
+                stopRenaming();
+              }}
+              onCancel={stopRenaming}
+            />
+          ) : (
+            <div className="board-heading">
+              <h1>
+                {board.color && (
+                  <span
+                    className="board-color-dot"
+                    data-color={board.color}
+                    aria-hidden="true"
+                  />
+                )}
+                {board.name}
+              </h1>
+              {board.team && (
+                <p className="muted small board-team">
+                  Shared with{' '}
+                  <Link to={`/teams/${board.team.id}`}>{board.team.name}</Link>
+                </p>
+              )}
+              <BoardDescription board={board} />
+            </div>
+          )}
+          <div className="board-actions">
+            <span
+              className={`live-status is-${liveStatus}`}
+              title="Changes by others appear automatically"
+            >
+              {liveStatus === 'live'
+                ? 'Live'
+                : liveStatus === 'reconnecting'
+                  ? 'Reconnecting…'
+                  : 'Connecting…'}
+            </span>
+            <button
+              type="button"
+              className="button"
+              aria-label="Board colour"
+              disabled={locked}
+              title={pausedTitle}
+              onClick={() => setChoosingColor(true)}
+            >
               {board.color && (
                 <span
-                  className="board-color-dot"
+                  className="swatch-dot"
                   data-color={board.color}
                   aria-hidden="true"
                 />
               )}
-              {board.name}
-            </h1>
-            {board.team && (
-              <p className="muted small board-team">
-                Shared with{' '}
-                <Link to={`/teams/${board.team.id}`}>{board.team.name}</Link>
-              </p>
+              Colour
+            </button>
+            {!renaming && (
+              <button
+                type="button"
+                className="button"
+                disabled={locked}
+                title={pausedTitle}
+                onClick={startRenaming}
+              >
+                Rename board
+              </button>
+            )}
+            {board.canDelete && (
+              <button
+                type="button"
+                className="button danger-outline"
+                disabled={locked}
+                title={pausedTitle}
+                onClick={() => setConfirmingDelete(true)}
+              >
+                Delete board
+              </button>
             )}
           </div>
+        </div>
+        <PeopleFilter
+          members={board.members}
+          selected={selectedPeople}
+          onChange={setPeopleFilter}
+          visibleCount={visibleBoard.tasks.length}
+          totalCount={board.tasks.length}
+        />
+        <ErrorMessage error={actionError} />
+        {locked && (
+          <p className="operation-hint" role="status">
+            {OPERATION_HINT}
+          </p>
         )}
-        <div className="board-actions">
-          <span
-            className={`live-status is-${liveStatus}`}
-            title="Changes by others appear automatically"
-          >
-            {liveStatus === 'live'
-              ? 'Live'
-              : liveStatus === 'reconnecting'
-                ? 'Reconnecting…'
-                : 'Connecting…'}
-          </span>
-          <button
-            type="button"
-            className="button"
-            aria-label="Board colour"
-            onClick={() => setChoosingColor(true)}
-          >
-            {board.color && (
-              <span
-                className="swatch-dot"
-                data-color={board.color}
-                aria-hidden="true"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collisionDetection}
+          measuring={MEASURING}
+          accessibility={{
+            announcements: makeAnnouncements(visibleBoard),
+            screenReaderInstructions: {draggable: DRAG_INSTRUCTIONS},
+          }}
+          {...handlers}
+        >
+          <div className="stages">
+            <SortableContext
+              items={stages.map((stage) => stageDndId(stage.id))}
+              strategy={horizontalListSortingStrategy}
+            >
+              {stages.map((stage, index) => (
+                <Stage
+                  key={stage.id}
+                  boardId={board.id}
+                  stage={stage}
+                  tasks={tasksOf(stage.id)}
+                  canMoveLeft={index > 0}
+                  canMoveRight={index < stages.length - 1}
+                  onMove={(direction) =>
+                    runMove(moveStage)({
+                      stageId: stage.id,
+                      ...neighboursForStep(stages, index, direction),
+                    })
+                  }
+                  members={board.members}
+                  onDeleteError={setActionError}
+                />
+              ))}
+            </SortableContext>
+            <AddStageForm boardId={board.id} />
+          </div>
+          <DragOverlay>
+            {active?.type === 'task' && (
+              <div className="task-card is-overlay">
+                {taskById.get(active.id)?.title}
+              </div>
+            )}
+            {active?.type === 'stage' && (
+              <StagePreview
+                stage={stages.find((s) => s.id === active.id)}
+                tasks={tasksOf(active.id)}
               />
             )}
-            Colour
-          </button>
-          {!renaming && (
-            <button
-              type="button"
-              className="button"
-              onClick={() => setRenaming(true)}
-            >
-              Rename board
-            </button>
-          )}
-          {board.canDelete && (
-            <button
-              type="button"
-              className="button danger-outline"
-              onClick={() => setConfirmingDelete(true)}
-            >
-              Delete board
-            </button>
-          )}
-        </div>
-      </div>
-      <PeopleFilter
-        members={board.members}
-        selected={selectedPeople}
-        onChange={setPeopleFilter}
-        visibleCount={visibleBoard.tasks.length}
-        totalCount={board.tasks.length}
-      />
-      <ErrorMessage error={actionError} />
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collisionDetection}
-        measuring={MEASURING}
-        accessibility={{
-          announcements: makeAnnouncements(visibleBoard),
-          screenReaderInstructions: {draggable: DRAG_INSTRUCTIONS},
-        }}
-        {...handlers}
-      >
-        <div className="stages">
-          <SortableContext
-            items={stages.map((stage) => stageDndId(stage.id))}
-            strategy={horizontalListSortingStrategy}
+          </DragOverlay>
+        </DndContext>
+        {choosingColor && (
+          <BoardColorDialog
+            board={board}
+            onClose={() => setChoosingColor(false)}
+          />
+        )}
+        {confirmingDelete && (
+          <ConfirmDialog
+            title="Delete board?"
+            onConfirm={handleDelete}
+            onCancel={() => setConfirmingDelete(false)}
           >
-            {stages.map((stage, index) => (
-              <Stage
-                key={stage.id}
-                boardId={board.id}
-                stage={stage}
-                tasks={tasksOf(stage.id)}
-                canMoveLeft={index > 0}
-                canMoveRight={index < stages.length - 1}
-                onMove={(direction) =>
-                  runMove(moveStage)({
-                    stageId: stage.id,
-                    ...neighboursForStep(stages, index, direction),
-                  })
-                }
-                members={board.members}
-                onDeleteError={setActionError}
-              />
-            ))}
-          </SortableContext>
-          <AddStageForm boardId={board.id} />
-        </div>
-        <DragOverlay>
-          {active?.type === 'task' && (
-            <div className="task-card is-overlay">
-              {taskById.get(active.id)?.title}
-            </div>
-          )}
-          {active?.type === 'stage' && (
-            <StagePreview
-              stage={stages.find((s) => s.id === active.id)}
-              tasks={tasksOf(active.id)}
-            />
-          )}
-        </DragOverlay>
-      </DndContext>
-      {choosingColor && (
-        <BoardColorDialog
-          board={board}
-          onClose={() => setChoosingColor(false)}
-        />
-      )}
-      {confirmingDelete && (
-        <ConfirmDialog
-          title="Delete board?"
-          onConfirm={handleDelete}
-          onCancel={() => setConfirmingDelete(false)}
-        >
-          <p>
-            <strong>{board.name}</strong> and all of its stages and tasks will
-            be deleted for everyone. This cannot be undone.
-          </p>
-        </ConfirmDialog>
-      )}
-    </main>
+            <p>
+              <strong>{board.name}</strong> and all of its stages and tasks will
+              be deleted for everyone. This cannot be undone.
+            </p>
+          </ConfirmDialog>
+        )}
+      </main>
+    </BoardOperationContext.Provider>
   );
 }
 

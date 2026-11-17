@@ -676,7 +676,9 @@ h1 {
 }
 
 .stage-header {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   min-height: 36px;
@@ -709,16 +711,36 @@ h1 {
   touch-action: none;
 }
 
-/* Quiet until the stage is hovered or focused (pointer devices only). */
+/*
+ * Pointer devices: the actions float over the right of the header and only
+ * show on hover or keyboard focus, so the stage name always has the full
+ * width. Touch devices (no hover): they are always visible and wrap onto
+ * their own row under the name.
+ */
 @media (hover: hover) {
   .stage-actions {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    padding-left: 20px;
+    background: linear-gradient(to right, transparent, var(--mist) 20px);
     opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%);
     transition: opacity 120ms var(--ease);
   }
 
   .stage:hover .stage-actions,
   .stage:focus-within .stage-actions {
     opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none) {
+  .stage-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -1206,27 +1228,27 @@ h1 {
   --swatch: var(--color-slate);
 }
 
-/* Tasks: a stripe down the left edge; the card itself stays white. */
+/* Tasks: a coloured outline around the card; the card itself stays white. */
 .task-card[data-color] {
   box-shadow:
-    inset 4px 0 0 var(--swatch),
+    inset 0 0 0 2px var(--swatch),
     var(--shadow-float);
 }
 
 .task-card[data-color]:hover {
   box-shadow:
-    inset 4px 0 0 var(--swatch),
+    inset 0 0 0 2px var(--swatch),
     var(--shadow-lift);
 }
 
-/* Boards: a band across the top of the card in the list. */
+/* Boards: a coloured outline around the card in the list. */
 .board-card[data-color] {
-  box-shadow: inset 0 6px 0 var(--swatch);
+  box-shadow: inset 0 0 0 2px var(--swatch);
 }
 
 .board-card[data-color]:hover {
   box-shadow:
-    inset 0 6px 0 var(--swatch),
+    inset 0 0 0 2px var(--swatch),
     var(--shadow-float);
 }
 
@@ -1314,4 +1336,121 @@ h1 {
     width: 40px;
     height: 40px;
   }
+}
+
+/* ---- Descriptions, stage colours, one change at a time ---- */
+
+/* Task cards: title, then up to two lines of the description. */
+.task-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.task-desc,
+.board-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 430;
+  line-height: 1.4;
+}
+
+.task-card.is-overlay .task-desc {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.board-card-desc {
+  margin-top: -8px;
+}
+
+.board-description {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 6px;
+  max-width: 72ch;
+}
+
+.board-description p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.board-description .link-button {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.link-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  border-bottom-color: transparent;
+}
+
+/* The heading grows with its content; while the description is being
+   edited it takes the whole row so the box can be wide. */
+.board-heading {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.board-heading:has(.description-form) {
+  flex-basis: 100%;
+}
+
+.description-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 960px;
+}
+
+.description-form textarea {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-input);
+  background: var(--paper);
+  line-height: 1.5;
+  min-height: 8.5em;
+  resize: vertical;
+}
+
+.description-form .inline-actions {
+  justify-content: flex-start;
+}
+
+/* Stages: a coloured outline around the whole column. */
+.stage[data-color] {
+  box-shadow: inset 0 0 0 2px var(--swatch);
+}
+
+.operation-hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Paused controls look paused; the card stays readable. */
+.task-card[aria-disabled="true"] {
+  cursor: default;
+}
+
+.add-task-button:disabled,
+.add-stage-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.add-task-button:disabled:hover,
+.add-stage-button:disabled:hover {
+  background: transparent;
+  color: var(--muted);
 }
