@@ -230,25 +230,52 @@ export function makeCollisionDetection(groups) {
 }
 
 /**
- * Keyboard coordinate getter: like dnd-kit's sortable one, but a dragged
- * stage only considers other stages (not the task cards inside them).
+ * Keyboard coordinate getter built on dnd-kit's sortable one, with two
+ * board-specific limits:
+ * - a dragged stage only considers other stages (not the task cards
+ *   inside them);
+ * - a task moved left or right ignores the stage column it is in. That
+ *   column's left edge is left of the card, so dnd-kit would otherwise
+ *   pick it for ArrowLeft and the task would stay put. Other (possibly
+ *   empty) stages stay valid targets.
  * @param {!KeyboardEvent} event
  * @param {!Object} args dnd-kit keyboard coordinate args.
  * @return {(!Object|undefined)}
  */
 export function keyboardCoordinates(event, args) {
   const {context} = args;
-  if (context.active?.data.current?.type !== 'stage') {
+  const containers = context.droppableContainers;
+  const type = context.active?.data.current?.type;
+  let keep = null;
+  if (type === 'stage') {
+    keep = (c) => c.data.current?.type === 'stage';
+  } else if (
+    type === 'task' &&
+    context.collisionRect &&
+    (event.code === 'ArrowLeft' || event.code === 'ArrowRight')
+  ) {
+    const {left, width} = context.collisionRect;
+    const centre = left + width / 2;
+    const isOwnColumn = (c) => {
+      const rect = context.droppableRects.get(c.id);
+      return (
+        c.data.current?.type === 'stage' &&
+        rect != null &&
+        rect.left <= centre &&
+        centre <= rect.left + rect.width
+      );
+    };
+    keep = (c) => !isOwnColumn(c);
+  }
+  if (!keep) {
     return sortableKeyboardCoordinates(event, args);
   }
-  const containers = context.droppableContainers;
-  const stagesOnly = {
+  const filtered = {
     get: (id) => containers.get(id),
-    getEnabled: () =>
-      containers.getEnabled().filter((c) => c.data.current?.type === 'stage'),
+    getEnabled: () => containers.getEnabled().filter(keep),
   };
   return sortableKeyboardCoordinates(event, {
     ...args,
-    context: {...context, droppableContainers: stagesOnly},
+    context: {...context, droppableContainers: filtered},
   });
 }

@@ -255,4 +255,72 @@ describe('keyboardCoordinates', () => {
     expect(keyboardCoordinates(event, args('stage'))).toBeUndefined();
     expect(keyboardCoordinates(event, args('task'))).toBeUndefined();
   });
+
+  // Two stages side by side: To Do (x 0–300) holding task 2, Done
+  // (x 310–610) holding task 1, which is being moved. Each card is inset
+  // 12px in its column, so Done's own left edge is left of the card.
+  function boardLayout() {
+    const rect = (left, top, width, height) => ({
+      left,
+      top,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+    });
+    const node = {current: document.createElement('div')};
+    const sortable = (containerId, index) => ({
+      current: {type: 'x', sortable: {containerId, index}},
+    });
+    const containers = [
+      {id: 'stage-1', node, data: {current: {type: 'stage'}}},
+      {id: 'stage-2', node, data: {current: {type: 'stage'}}},
+      {id: 'task-2', node, data: sortable('stage-1-tasks', 0)},
+      {id: 'task-1', node, data: sortable('stage-2-tasks', 0)},
+    ];
+    for (const c of containers.slice(2)) {
+      c.data.current.type = 'task';
+    }
+    const rects = new Map([
+      ['stage-1', rect(0, 0, 300, 400)],
+      ['stage-2', rect(310, 0, 300, 400)],
+      ['task-2', rect(12, 60, 276, 60)],
+      ['task-1', rect(322, 60, 276, 60)],
+    ]);
+    return {
+      active: 'task-1',
+      currentCoordinates: {x: 322, y: 60},
+      context: {
+        active: {id: 'task-1', data: {current: {type: 'task'}}},
+        collisionRect: rects.get('task-1'),
+        droppableRects: rects,
+        droppableContainers: {
+          get: (id) => containers.find((c) => c.id === id),
+          getEnabled: () => containers,
+        },
+        over: {id: 'task-1'},
+        scrollableAncestors: [],
+      },
+    };
+  }
+
+  it('moves a task left into the previous stage, not its own', async () => {
+    const {keyboardCoordinates} = await import('../src/features/boards/dnd.js');
+    const event = {code: 'ArrowLeft', preventDefault() {}};
+    const target = keyboardCoordinates(event, boardLayout());
+    // Somewhere in To Do (x < 300), not back onto Done's own column.
+    expect(target.x).toBeLessThan(300);
+  });
+
+  it('still moves a task right into the next stage', async () => {
+    const {keyboardCoordinates} = await import('../src/features/boards/dnd.js');
+    const layout = boardLayout();
+    // Start from To Do's task this time.
+    layout.active = 'task-2';
+    layout.context.active = {id: 'task-2', data: {current: {type: 'task'}}};
+    layout.context.collisionRect = layout.context.droppableRects.get('task-2');
+    layout.context.over = {id: 'task-2'};
+    const event = {code: 'ArrowRight', preventDefault() {}};
+    expect(keyboardCoordinates(event, layout).x).toBeGreaterThanOrEqual(310);
+  });
 });
