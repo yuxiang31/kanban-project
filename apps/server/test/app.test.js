@@ -16,6 +16,13 @@ describe('app', () => {
     expect(res.json()).toEqual({ok: true});
   });
 
+  it('reports unhealthy when the database cannot be used', async () => {
+    app = await createTestApp();
+    app.db.close();
+    const res = await app.inject({method: 'GET', url: '/api/health'});
+    expect(res.statusCode).toBe(500);
+  });
+
   it('returns JSON 404 for unknown api routes', async () => {
     app = await createTestApp();
     const res = await app.inject({method: 'GET', url: '/api/nope'});

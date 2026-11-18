@@ -1,0 +1,22 @@
+# Keep the build context small and free of local state and secrets.
+**/node_modules
+**/dist
+**/coverage
+**/data
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.claude
+design
+Design.md
+*.md
+!apps/**/*.md
+
+Dockerfile
+docker-compose.yml
+.dockerignore

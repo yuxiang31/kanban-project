@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, format, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Format (Biome)
+        run: npm run format:check
+
+      - name: Test with coverage (80% minimum)
+        run: npm run test:coverage
+
+      - name: Build web app
+        run: npm run build
+
+  docker:
+    name: Docker image smoke test
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build image
+        run: docker build -t kanban:ci .
+
+      - name: Start container
+        run: |
+          docker run -d --name kanban -p 3000:3000 \
+            -e JWT_SECRET="ci-$(openssl rand -hex 16)" kanban:ci
+
+      - name: Wait until healthy
+        run: |
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' kanban)
+            echo "health: $status"
+            [ "$status" = healthy ] && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Smoke test
+        run: |
+          set -e
+          curl -fsS http://localhost:3000/api/health
+          curl -fsS http://localhost:3000/ | grep -q '<div id="root">'
+          # Client-side routes fall back to the app.
+          curl -fsS http://localhost:3000/boards/1 | grep -q '<div id="root">'
+          # Register, then read the session back with the cookie.
+          curl -fsS -c cookies.txt -H 'content-type: application/json' \
+            -d '{"username":"smoke","password":"password123","displayName":"Smoke"}' \
+            http://localhost:3000/api/auth/register
+          curl -fsS -b cookies.txt http://localhost:3000/api/auth/me | grep -q '"smoke"'
+          # The database lives on the volume and survives a restart.
+          docker restart kanban
+          for i in $(seq 1 30); do
+            curl -fsS -o /dev/null http://localhost:3000/api/health && break
+            sleep 1
+          done
+          curl -fsS -b cookies.txt http://localhost:3000/api/auth/me | grep -q '"smoke"'
+
+      - name: Container logs
+        if: always()
+        run: docker logs kanban

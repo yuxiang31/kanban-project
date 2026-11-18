@@ -25,13 +25,15 @@ const DEV_JWT_SECRET = 'dev-only-insecure-secret';
  */
 export function loadConfig(env) {
   const isProduction = env.NODE_ENV === 'production';
-  if (isProduction && !env.JWT_SECRET) {
+  // A blank value (e.g. `JWT_SECRET=` copied from .env.example) is unset.
+  const jwtSecret = env.JWT_SECRET?.trim() || null;
+  if (isProduction && !jwtSecret) {
     throw new Error('JWT_SECRET must be set in production.');
   }
   return {
     port: Number(env.PORT ?? 3000),
     host: env.HOST ?? '127.0.0.1',
-    jwtSecret: env.JWT_SECRET ?? DEV_JWT_SECRET,
+    jwtSecret: jwtSecret ?? DEV_JWT_SECRET,
     cookieSecure: env.COOKIE_SECURE === 'true',
     dbPath: env.DB_PATH ?? path.join(SERVER_ROOT, 'data', 'kanban.db'),
     webDistDir: env.WEB_DIST_DIR ?? null,

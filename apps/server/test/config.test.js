@@ -6,6 +6,15 @@ describe('loadConfig', () => {
     expect(() => loadConfig({NODE_ENV: 'production'})).toThrow(/JWT_SECRET/);
   });
 
+  it('treats an empty JWT_SECRET (from a copied .env.example) as unset', () => {
+    expect(() =>
+      loadConfig({NODE_ENV: 'production', JWT_SECRET: '  '}),
+    ).toThrow(/JWT_SECRET/);
+    expect(loadConfig({JWT_SECRET: ''}).jwtSecret).toBe(
+      loadConfig({}).jwtSecret,
+    );
+  });
+
   it('applies defaults in development', () => {
     const config = loadConfig({});
     expect(config).toMatchObject({port: 3000, host: '127.0.0.1'});

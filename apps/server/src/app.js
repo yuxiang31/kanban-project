@@ -56,7 +56,12 @@ export async function buildApp(opts) {
 
   await app.register(
     async (api) => {
-      api.get('/health', async () => ({ok: true}));
+      // Used by the Docker HEALTHCHECK: fails (500) if the database can't
+      // answer a query, not only when the process is down.
+      api.get('/health', async () => {
+        app.db.prepare('SELECT 1').get();
+        return {ok: true};
+      });
       await api.register(authRoutes, {
         prefix: '/auth',
         bcryptRounds: opts.bcryptRounds ?? DEFAULT_BCRYPT_ROUNDS,
