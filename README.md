@@ -142,7 +142,8 @@ cookie (except register, login and health).
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests:
+`.github/workflows/ci.yml` runs on pushes to `main` or `master`, on pull
+requests, and by hand from the Actions tab (Run workflow):
 
 1. **Checks:** lint, format check, tests with the 80% coverage gate, and
    the web build.
